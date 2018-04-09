@@ -15,12 +15,13 @@ class WebService {
     
     static let shared = WebService()
     
-    func simpleGET() {
+    func simpleGET(with completion: @escaping ((_ data : Data?) -> ())) {
 
         //    GET     /posts/1/comments
         Rest.prepare(HTTPMethod: .GET, url: Configuration.serverUrl)
             .setURLParams(["posts", "1", "comments"])
             .call { (data, responce, error) in
+                completion(data)
                 if error == nil {
                     print(data ?? "No data")
                 }else{
@@ -50,11 +51,12 @@ class WebService {
 //        }
     }
     
-    func SimplePOST() {
+    func SimplePOST(with completion: @escaping ((_ data : Data?) -> ())) {
         
         //    POST     /posts
                 Rest.prepare(HTTPMethod: .POST, url: Configuration.post.posts.url)
                     .call { (data, responce, error) in
+                        completion(data)
                         if error == nil {
                             print(data ?? "No data")
                         }else{
@@ -63,12 +65,13 @@ class WebService {
                 }
     }
     
-    func SimplePUT() {
+    func SimplePUT(with completion: @escaping ((_ data : Data?) -> ())) {
         
         //    PUT     /posts/1
         Rest.prepare(HTTPMethod: .PUT, url: Configuration.serverUrl)
             .setURLParams(["posts", "1"])
             .call { (data, responce, error) in
+                completion(data)
                 if error == nil {
                     print(data ?? "No data")
                 }else{
@@ -77,12 +80,13 @@ class WebService {
         }
     }
     
-    func SimplePATCH() {
+    func SimplePATCH(with completion: @escaping ((_ data : Data?) -> ())) {
         
         //    PATCH     /posts/1
         Rest.prepare(HTTPMethod: .PATCH, url: Configuration.serverUrl)
             .setURLParams(["posts", "1"])
             .call { (data, responce, error) in
+                completion(data)
                 if error == nil {
                     print(data ?? "No data")
                 }else{
@@ -91,12 +95,13 @@ class WebService {
         }
     }
     
-    func SimpleDELETE() {
+    func SimpleDELETE(with completion: @escaping ((_ data : Data?) -> ())) {
         
         //    DELETE     /posts/1
         Rest.prepare(HTTPMethod: .DELETE, url: Configuration.serverUrl)
             .setURLParams(["posts", "1"])
             .call { (data, responce, error) in
+                completion(data)
                 if error == nil {
                     print(data ?? "No data")
                 }else{
@@ -105,7 +110,8 @@ class WebService {
         }
     }
     
-    func SimpleTRY() {
+    func SimpleTRY(with completion: @escaping (() -> ())) {
+        completion()
         print("Try Yourself")
     }
     

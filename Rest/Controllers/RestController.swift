@@ -15,7 +15,7 @@ private let lineSpacing: CGFloat = 32
 private let xInset: CGFloat = 16
 private let topInset: CGFloat = 8
 
-class ViewController: UIViewController {
+class RestController: UIViewController {
     @IBOutlet private weak var collectionView: UICollectionView!
     fileprivate var eamples: [Example] = []
     
@@ -47,7 +47,7 @@ class ViewController: UIViewController {
     }
 }
 
-extension ViewController: UICollectionViewDataSource, UICollectionViewDelegate {
+extension RestController: UICollectionViewDataSource, UICollectionViewDelegate {
     func collectionView(_ collectionView: UICollectionView,
                         cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: ExampleCell.id, for: indexPath) as! ExampleCell
@@ -66,28 +66,64 @@ extension ViewController: UICollectionViewDataSource, UICollectionViewDelegate {
 //        DELETE, GET, HEAD, OPTIONS, PATCH, POST, PUT
         
         if HTTPMethod.GET.rawValue == eamples[indexPath.row].httpMethod {
-            WebService.shared.simpleGET()
+            WebService.shared.simpleGET{ data in
+                let result = ResultViewController.instance
+                result.stringTitle = self.eamples[indexPath.row].httpMethod
+                result.dataResult = data
+                
+                self.navigationController?.pushViewController(result, animated: true)
+            }
         }
         
         if HTTPMethod.POST.rawValue == eamples[indexPath.row].httpMethod {
-            WebService.shared.SimplePOST()
+            WebService.shared.SimplePOST { data in
+                let result = ResultViewController.instance
+                result.stringTitle = self.eamples[indexPath.row].httpMethod
+                result.dataResult = data
+                
+                self.navigationController?.pushViewController(result, animated: true)
+            }
         }
 
         if HTTPMethod.PATCH.rawValue == eamples[indexPath.row].httpMethod {
-            WebService.shared.SimplePATCH()
+            WebService.shared.SimplePATCH { data in
+                let result = ResultViewController.instance
+                result.stringTitle = self.eamples[indexPath.row].httpMethod
+                result.dataResult = data
+                
+                self.navigationController?.pushViewController(result, animated: true)
+            }
         }
         
         if HTTPMethod.DELETE.rawValue == eamples[indexPath.row].httpMethod {
-            WebService.shared.SimpleDELETE()
+            WebService.shared.SimpleDELETE { data in
+                let result = ResultViewController.instance
+                result.stringTitle = self.eamples[indexPath.row].httpMethod
+                result.dataResult = data
+                
+                self.navigationController?.pushViewController(result, animated: true)
+            }
         }
         
         if HTTPMethod.PUT.rawValue == eamples[indexPath.row].httpMethod {
-            WebService.shared.SimplePUT()
+            WebService.shared.SimplePUT { data in
+                let result = ResultViewController.instance
+                result.stringTitle = self.eamples[indexPath.row].httpMethod
+                result.dataResult = data
+                
+                self.navigationController?.pushViewController(result, animated: true)
+            }
         }
         
         if HTTPMethod.OPTIONS.rawValue == eamples[indexPath.row].httpMethod ||
              HTTPMethod.HEAD.rawValue == eamples[indexPath.row].httpMethod {
-            WebService.shared.SimpleTRY()
+            WebService.shared.SimpleTRY{
+                let result = ResultViewController.instance
+                result.stringTitle = self.eamples[indexPath.row].httpMethod
+                result.dataResult = "Try Yourself".data(using: String.Encoding.utf8)
+                
+                self.navigationController?.pushViewController(result, animated: true)
+            }
         }
     }
 }

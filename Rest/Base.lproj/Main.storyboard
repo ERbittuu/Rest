@@ -25,10 +25,10 @@
             </objects>
             <point key="canvasLocation" x="-1404" y="81"/>
         </scene>
-        <!--View Controller-->
+        <!--Rest Controller-->
         <scene sceneID="tne-QT-ifu">
             <objects>
-                <viewController storyboardIdentifier="FeedViewController" automaticallyAdjustsScrollViewInsets="NO" id="BYZ-38-t0r" customClass="ViewController" customModule="Rest" customModuleProvider="target" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="FeedViewController" automaticallyAdjustsScrollViewInsets="NO" id="BYZ-38-t0r" customClass="RestController" customModule="Rest" customModuleProvider="target" sceneMemberID="viewController">
                     <layoutGuides>
                         <viewControllerLayoutGuide type="top" id="y3c-jy-aDJ"/>
                         <viewControllerLayoutGuide type="bottom" id="wfy-db-euE"/>
@@ -71,6 +71,42 @@
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="-674" y="82"/>
+        </scene>
+        <!--Result View Controller-->
+        <scene sceneID="epk-uB-yOB">
+            <objects>
+                <viewController storyboardIdentifier="ResultViewController" id="EDn-d0-ehg" customClass="ResultViewController" customModule="Rest" customModuleProvider="target" sceneMemberID="viewController">
+                    <layoutGuides>
+                        <viewControllerLayoutGuide type="top" id="Tro-gJ-lfa"/>
+                        <viewControllerLayoutGuide type="bottom" id="kBE-C6-Oen"/>
+                    </layoutGuides>
+                    <view key="view" contentMode="scaleToFill" id="fTF-Q6-qFj">
+                        <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" textAlignment="natural" translatesAutoresizingMaskIntoConstraints="NO" id="7dr-S5-GGm">
+                                <rect key="frame" x="0.0" y="20" width="375" height="647"/>
+                                <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                <string key="text">Lorem ipsum dolor sit er elit lamet, consectetaur cillium adipisicing pecu, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Nam liber te conscient to factor tum poen legum odioque civiuda.</string>
+                                <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                                <textInputTraits key="textInputTraits" autocapitalizationType="sentences"/>
+                            </textView>
+                        </subviews>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                        <constraints>
+                            <constraint firstItem="kBE-C6-Oen" firstAttribute="top" secondItem="7dr-S5-GGm" secondAttribute="bottom" id="LfZ-v3-8KQ"/>
+                            <constraint firstAttribute="trailing" secondItem="7dr-S5-GGm" secondAttribute="trailing" id="MRM-cc-ILz"/>
+                            <constraint firstItem="7dr-S5-GGm" firstAttribute="top" secondItem="Tro-gJ-lfa" secondAttribute="bottom" id="ix5-2T-mws"/>
+                            <constraint firstItem="7dr-S5-GGm" firstAttribute="leading" secondItem="fTF-Q6-qFj" secondAttribute="leading" id="rIE-Fr-tlz"/>
+                        </constraints>
+                    </view>
+                    <connections>
+                        <outlet property="resultView" destination="7dr-S5-GGm" id="3Gp-BM-smt"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="cmS-7V-hA0" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="44" y="81"/>
         </scene>
     </scenes>
 </document>
