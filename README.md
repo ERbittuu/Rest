@@ -1,86 +1,59 @@
 # Rest
 An HTTP networking library for iOS in Swift 4
 
+## Features 
+    1. Support all basic service type  
+    2. Multipart file support 
+    3. Cancel support 
+    4. Inbuilt log suport 
+
 ## Example
 
-### Simple
 
 ```swift
-//    GET     /posts/1/comments
-Rest.prepare(HTTPMethod: .GET, url: Configuration.serverUrl)
-    .setURLParams(["posts", "1", "comments"])
-    .call { (data, responce, error) in
-        if error == nil {
-            print(data ?? "No data")
-        }else{
-            print(error?.localizedDescription ?? "error")
-        }
-}
-
-//    GET     /posts
-Rest.prepare(HTTPMethod: .GET, url: Configuration.post.posts.url)
-    .call { (data, responce, error) in
-        if error == nil {
-            print(data ?? "No data")
-        }else{
-            print(error?.localizedDescription ?? "error")
-        }
-}
-
-//    GET     /comments?postId=1
-Rest.prepare(HTTPMethod: .GET, url: Configuration.post.posts.url)
-    .setParams(["userId" : 1])
-    .call { (data, responce, error) in
-        if error == nil {
-            print(data ?? "No data")
-        }else{
-            print(error?.localizedDescription ?? "error")
-        }
-}
-
-//    POST     /posts
-Rest.prepare(HTTPMethod: .POST, url: Configuration.post.posts.url)
-    .call { (data, responce, error) in
-        if error == nil {
-            print(data ?? "No data")
-        }else{
-            print(error?.localizedDescription ?? "error")
-        }
-}
-
-//    PUT     /posts/1
-Rest.prepare(HTTPMethod: .PUT, url: Configuration.serverUrl)
-    .setURLParams(["posts", "1"])
-    .call { (data, responce, error) in
-        if error == nil {
-            print(data ?? "No data")
-        }else{
-            print(error?.localizedDescription ?? "error")
-        }
-}
-
-//    PATCH     /posts/1
-Rest.prepare(HTTPMethod: .PATCH, url: Configuration.serverUrl)
-    .setURLParams(["posts", "1"])
-    .call { (data, responce, error) in
-        if error == nil {
-            print(data ?? "No data")
-        }else{
-            print(error?.localizedDescription ?? "error")
-        }
-}
-
-//    DELETE     /posts/1
-Rest.prepare(HTTPMethod: .DELETE, url: Configuration.serverUrl)
-    .setURLParams(["posts", "1"])
-    .call { (data, responce, error) in
-        if error == nil {
-            print(data ?? "No data")
-        }else{
-            print(error?.localizedDescription ?? "error")
-        }
-}
     
+     var cs : CancellationSource?
+    
+    // request from server 
+    @IBAction func getCall(_ sender: UIButton) {
+        self.cs = WebService.shared.simpleGET{ data in
+            // Do something with data
+        }
+        
+        // Handler called when service cancelled manually
+        self.cs?.token.register {
+            print("I have cancelled request stop unwanted task here")
+        }
+    }
+
+    // Request cancelled by user 
+    @IBAction func cancelLastCall(_ sender: UIButton) {
+        cs?.cancel()
+    }
+
+    class WebService {
+        
+        private init() { }
+        static var shared : WebService {
+            let service = WebService()
+            Rest.default.showLogs = true
+            return service
+        }
+        
+        func simpleGET(with completion: @escaping ((_ data : Data?) -> ())) -> CancellationSource {
+            // Create cancellable token
+            let source = CancellationSource()
+            //    GET     /posts
+            Rest.prepare(HTTPMethod: .GET, url: Configuration.post.posts.url)
+                .call(cancelToken: source.token) { (data, responce, error) in
+                    // send completion data
+                    //completion(data)
+            }
+            return source
+        }       
+    }
+}
+
 ```
 
 # Contributing to Rest
