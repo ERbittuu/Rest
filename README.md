@@ -4,8 +4,10 @@ An HTTP networking library for iOS in Swift 4
 ## Features 
     1. Support all basic service type  
     2. Multipart file support 
-    3. Cancel support 
-    4. Inbuilt log suport 
+    3. Request Cancel support 
+    4. Inbuilt log support 
+    5. Network Activity Indicator support
+
 
 ## Example
 
@@ -15,21 +17,19 @@ An HTTP networking library for iOS in Swift 4
      var cs : CancellationSource?
     
     // request from server 
-    @IBAction func getCall(_ sender: UIButton) {
-        self.cs = WebService.shared.simpleGET{ data in
-            // Do something with data
-        }
         
-        // Handler called when service cancelled manually
+    self.cs = WebService.shared.simpleGET{ data in
+            // Do something with data
+            }
+        
+    // Handler called when service cancelled manually
         self.cs?.token.register {
             print("I have cancelled request stop unwanted task here")
         }
     }
 
     // Request cancelled by user 
-    @IBAction func cancelLastCall(_ sender: UIButton) {
         cs?.cancel()
-    }
 
     class WebService {
         

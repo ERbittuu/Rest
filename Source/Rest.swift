@@ -50,7 +50,7 @@ open class Rest {
         }
         
         /// Network Activity Indicator display default is true
-        static var activityIndicatorDisplay : Bool = true
+        public static var activityIndicatorDisplay : Bool = true
 
     }
     private static var indexRequest = 0
