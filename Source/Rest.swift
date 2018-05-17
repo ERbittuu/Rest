@@ -7,6 +7,33 @@
 //
 import Foundation
 import UIKit
+import SystemConfiguration
+
+fileprivate class Network {
+     static func isAvailable() -> Bool {
+        var zeroAddress = sockaddr_in()
+        zeroAddress.sin_len = UInt8(MemoryLayout<sockaddr_in>.size)
+        zeroAddress.sin_family = sa_family_t(AF_INET)
+        
+        guard let defaultRouteReachability = withUnsafePointer(to: &zeroAddress, {
+            $0.withMemoryRebound(to: sockaddr.self, capacity: 1) {
+                SCNetworkReachabilityCreateWithAddress(nil, $0)
+            }
+        }) else {
+            return false
+        }
+        
+        var flags: SCNetworkReachabilityFlags = []
+        if !SCNetworkReachabilityGetFlags(defaultRouteReachability, &flags) {
+            return false
+        }
+        
+        let isReachable = flags.contains(.reachable)
+        let needsConnection = flags.contains(.connectionRequired)
+        
+        return (isReachable && !needsConnection)
+    }
+}
 
 open class Rest {
     
@@ -18,13 +45,26 @@ open class Rest {
         public static var timeout = 60.0
         
         /// index webservice help in debug
-        static var index = 0
+        static var index : Int {
+            return Rest.indexRequest
+        }
+        
+        /// Network Activity Indicator display default is true
+        public static var activityIndicatorDisplay : Bool = true
+
     }
+    private static var indexRequest = 0
     
     private var restManager: RestManager!
     
     private static func prepareNextIndex() {
-        Rest.default.index = Rest.default.index + 1
+        Rest.indexRequest = Rest.indexRequest + 1
+    }
+    
+    fileprivate static func log(str : String) {
+        if Rest.default.showLogs {
+            print("<\(Rest.default.index)> " + str)
+        }
     }
     
     /**
@@ -107,13 +147,29 @@ open class Rest {
     }
     
     /**
-     response the http body in NSData type with error and
+     response the http body in NSData type with error
      
      - parameter callback: callback Closure with optional responce data, optional responce HTTPURLResponse, optional error as NSError
      - parameter response: void
      */
-    open func call(_ callback: ((_ data: Data?,_ response: HTTPURLResponse?,_ error: NSError?) -> Void)?) {
-        self.restManager?.fire(callback)
+    open func call(cancelToken token: CancellationToken? = nil,  _ callback: ((_ data: Data?,_ response: HTTPURLResponse?,_ error: NSError?) -> Void)?) {
+        
+        if Network.isAvailable() {
+            self.restManager.cancelToken = token
+            self.restManager?.fire(callback)
+            if let t = token {
+                t.register {
+                    self.restManager.task.cancel()
+                    self.restManager.session.finishTasksAndInvalidate()
+                }
+            }
+        }else{
+            let e = NSError(domain: RestManager.errorDomain, code: 503, userInfo: ["reason" : "Internet not available"])
+            Rest.log(str: "Rest Error: " + e.localizedDescription)
+            DispatchQueue.main.async {
+                callback?(nil, nil, e)
+            }
+        }
     }
 }
 
@@ -139,7 +195,7 @@ private func > <T : Comparable>(lhs: T?, rhs: T?) -> Bool {
 
 private class RestManager: NSObject {
     let boundary = "RestBoundary\(NSUUID().uuidString)"
-    let errorDomain = "com.erbittuu.Rest"
+    static let errorDomain = "com.erbittuu.Rest"
     
     var HTTPBodyRaw = ""
     var HTTPBodyRawIsJSON = false
@@ -150,6 +206,8 @@ private class RestManager: NSObject {
     var files: [File]?
     
     var callback: ((_ data: Data?, _ response: HTTPURLResponse?, _ error: NSError?) -> Void)?
+    
+    var cancelToken: CancellationToken? = nil
     
     var session: URLSession!
     var url: String!
@@ -293,51 +351,56 @@ private class RestManager: NSObject {
         }
         self.request.httpBody = data as Data
     }
+    
     private func fireTask() {
         
         DispatchQueue.main.async {
-            UIApplication.shared.isNetworkActivityIndicatorVisible = true
+            if Rest.default.activityIndicatorDisplay {
+                UIApplication.shared.isNetworkActivityIndicatorVisible = true
+            }
         }
         
-        if Rest.default.showLogs { if let a = self.request.allHTTPHeaderFields { print("Rest Request HEADERS: ", a.description); }; }
+        if let a = self.request.allHTTPHeaderFields { Rest.log(str: "Rest Request HEADERS: " + a.description) }
+        
         let semaphore = DispatchSemaphore(value: 0)
         self.task = self.session.dataTask(with: self.request) { (data, response, error) -> Void in
             
+            self.cancelToken?.resetAllHandlers()
+            
             DispatchQueue.main.async {
-                UIApplication.shared.isNetworkActivityIndicatorVisible = false
+                if Rest.default.activityIndicatorDisplay {
+                    UIApplication.shared.isNetworkActivityIndicatorVisible = false
+                }
             }
             
-            if Rest.default.showLogs { if let a = response { print("Rest Response: ", a.description); }}
             semaphore.signal()
             if let error = error as NSError? {
-                if error.code == -999 {
-                    let e = NSError(domain: self.errorDomain, code: error.code, userInfo: error.userInfo)
-                    print("Rest Error: ", e.localizedDescription)
-                    DispatchQueue.main.async {
-                        self.callback?(nil, nil, e)
-                    }
+                if error.code == -999 { // NSURLErrorCancelled
+//                    let e = NSError(domain: RestManager.errorDomain, code: error.code, userInfo: error.userInfo)
+//                    Rest.log(str: "Rest Error: " + e.localizedDescription)
+                    Rest.log(str: "Rest Cancel Manually: " + self.url)
                 } else {
-                    let e = NSError(domain: self.errorDomain, code: error.code, userInfo: error.userInfo)
-                    print("Rest Error: ", e.localizedDescription)
+                    let e = NSError(domain: RestManager.errorDomain, code: error.code, userInfo: error.userInfo)
+                    Rest.log(str: "Rest Error: " + e.localizedDescription)
                     DispatchQueue.main.async {
                         self.callback?(nil, nil, e)
-                        self.session.finishTasksAndInvalidate()
                     }
                 }
             } else {
+                if let a = response { Rest.log(str: "Rest Response: " + a.description) }
+
                 DispatchQueue.main.async {
-                    
-                    if Rest.default.showLogs {
-                        if let responceString = String(data: data!, encoding: .utf8) {
-                            print("Rest response: ", responceString)
+                    if let _data = data {
+                        if let responceString = String(data: _data, encoding: .utf8) {
+                            Rest.log(str: "Rest Response: " + responceString)
                         } else {
-                            print("Rest response : Unable to convert in Data")
+                            Rest.log(str: "Rest response : Unable to log responce string")
                         }
+                        self.callback?(data, response as? HTTPURLResponse, nil)
                     }
-                    self.callback?(data, response as? HTTPURLResponse, nil)
-                    self.session.finishTasksAndInvalidate()
                 }
             }
+            self.session.finishTasksAndInvalidate()
         }
         self.task.resume()
         if flow == .sync{
@@ -465,5 +528,153 @@ private class RestHelper {
         
         let allowedCharacterSet = (CharacterSet(charactersIn: "!*'();:@&=+$,/?%#[] ").inverted)
         return string.addingPercentEncoding(withAllowedCharacters: allowedCharacterSet) ?? string
+    }
+}
+
+// Cancel request
+
+enum State {
+    case cancelled
+    case pending(CancellationSource)
+}
+
+/**
+ A `CancellationToken` indicates if cancellation of "something" was requested.
+ Can be passed around and checked by whatever wants to be cancellable.
+ 
+ To create a cancellation token, use `CancellationTokenSource`.
+ */
+public struct CancellationToken {
+    
+    private weak var source: CancellationSource?
+    
+    fileprivate init(source: CancellationSource) {
+        self.source = source
+    }
+    
+    public var isCancellationRequested: Bool {
+        return source?.isCancellationRequested ?? true
+    }
+   
+    public func resetAllHandlers() {
+        guard let source = source else {
+            return
+        }
+        source.resetAllHandlers()
+    }
+    
+    public func register(_ handler: @escaping () -> Void) {
+        guard let source = source else {
+            return handler()
+        }
+        
+        source.register(handler)
+    }
+}
+
+/**
+ A `CancellationTokenSource` is used to create a `CancellationToken`.
+ The created token can be set to "cancellation requested" using the `cancel()` method.
+ */
+public class CancellationSource {
+    
+    private let internalState: InternalState
+    fileprivate var isCancellationRequested: Bool {
+        return internalState.readCancelled()
+    }
+    
+    public init() {
+        internalState = InternalState()
+    }
+    
+    deinit {
+        tryCancel()
+    }
+    
+    public var token: CancellationToken {
+        return CancellationToken(source: self)
+    }
+    
+    fileprivate func resetAllHandlers() {
+        internalState.removeHandlers()
+    }
+    
+    fileprivate func register(_ handler: @escaping () -> Void) {
+        if let handler = internalState.addHandler(handler) {
+            handler()
+        }
+    }
+    
+    public func cancel() {
+        tryCancel()
+    }
+    
+    public func cancelAfter(deadline dispatchTime: DispatchTime) {
+        // On a background queue
+        let queue = DispatchQueue.global(qos: .userInitiated)
+        
+        queue.asyncAfter(deadline: dispatchTime) { [weak self] in
+            self?.tryCancel()
+        }
+    }
+    
+    public func cancelAfter(timeInterval: TimeInterval) {
+        cancelAfter(deadline: .now() + timeInterval)
+    }
+    
+    fileprivate func tryCancel() {
+        let handlers = internalState.tryCancel()
+        
+        // Call all previously scheduled handlers
+        for handler in handlers {
+            handler()
+        }
+    }
+}
+
+extension CancellationSource {
+    typealias Handler = () -> Void
+    
+    fileprivate class InternalState {
+        private let lock = NSLock()
+        private var cancelled = false
+        private var handlers: [() -> Void] = []
+        
+        func readCancelled() -> Bool {
+            lock.lock(); defer { lock.unlock() }
+            
+            return cancelled
+        }
+        
+        func tryCancel() -> [Handler] {
+            lock.lock(); defer { lock.unlock() }
+            
+            if cancelled {
+                return []
+            }
+            
+            let handlersToExecute = handlers
+            
+            cancelled = true
+            handlers = []
+            
+            return handlersToExecute
+        }
+        
+        func removeHandlers() {
+            lock.lock(); defer { lock.unlock() }
+            handlers.removeAll()
+        }
+        
+        func addHandler(_ handler: @escaping Handler) -> Handler? {
+            lock.lock(); defer { lock.unlock() }
+            
+            if !cancelled {
+                handlers.append(handler)
+                return nil
+            }
+            
+            return handler
+        }
     }
 }
