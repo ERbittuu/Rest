@@ -306,8 +306,19 @@ private class RestManager: NSObject {
             }
         }
         
+        Rest.log(str: "Rest Request START - - - - - - -  - -  - -  - -")
+        
         if let a = self.request.allHTTPHeaderFields {
             Rest.log(str: "Rest Request HEADERS: " + a.description)
+        }
+        
+        if let a = request {
+            Rest.log(str: "Rest Request: " + a.description)
+            Rest.log(str: "Rest Request METHOD: " + method)
+        }
+        
+        if method != "GET" && self.params?.count > 0 {
+            Rest.log(str: "Rest Request PARAMS: " + self.params!.description)
         }
         
         let semaphore = DispatchSemaphore(value: 0)
@@ -326,19 +337,20 @@ private class RestManager: NSObject {
             
             if let error = error as NSError? {
                 if error.code == -999 { // NSURLErrorCancelled
-                    Rest.log(str: "Rest Cancel Manually: " + self.url)
+                    Rest.log(str: "Rest Cancel Manually RESPONSE: " + self.url)
+                    DispatchQueue.main.async {
+                        callback(nil, RestError.decoding(message: "Request Canceled Manually"))
+                    }
                 } else {
                     let e = NSError(domain: RestManager.errorDomain, code: error.code, userInfo: error.userInfo)
-                    Rest.log(str: "Rest Error: " + e.localizedDescription)
+                    Rest.log(str: "Rest Error RESPONSE : " + e.localizedDescription)
                     DispatchQueue.main.async {
                         callback(nil, RestError.decoding(message: error.localizedDescription))
                     }
                 }
+                Rest.log(str: "Rest Request END - - - - - - -  - -  - -  - - \n")
             }
             else {
-                if let a = response {
-                    Rest.log(str: "Rest Response: " + a.description)
-                }
                 
                 DispatchQueue.global(qos: .utility).async {
                     do {
@@ -347,29 +359,31 @@ private class RestManager: NSObject {
                             jsonDecoder.keyDecodingStrategy = .convertFromSnakeCase
                             let object = try jsonDecoder.decode(T.self, from: data)
                             
+                            if let responceString = String(data: data, encoding: .utf8) {
+                                Rest.log(str: "Rest RESPONSE : " + responceString.description)
+                            } else {
+                                Rest.log(str: "Rest RESPONSE : Unable to log responce string")
+                            }
                             DispatchQueue.main.async {
                                 callback(object, nil)
                             }
-                            
-                            if let responceString = String(data: data, encoding: .utf8) {
-                                Rest.log(str: "Rest Response: " + responceString.description)
-                            } else {
-                                Rest.log(str: "Rest response : Unable to log responce string")
-                            }
                         }else{
+                            Rest.log(str: "Rest RESPONSE : ERROR data is nil from server")
                             DispatchQueue.main.async {
                                 callback(nil, nil)
                             }
-                            Rest.log(str: "Rest response : ERROR data is nil from server")
                         }
+                        Rest.log(str: "Rest Request END - - - - - - -  - -  - -  - - \n")
                     } catch let error {
+                        Rest.log(str: "Rest RESPONSE : \(error.localizedDescription)")
+                        Rest.log(str: "Rest Request END - - - - - - -  - -  - -  - - \n")
                         DispatchQueue.main.async {
                             callback(nil, RestError.decoding(message: error.localizedDescription))
                         }
-                        Rest.log(str: "Rest response : \(error.localizedDescription)")
                     }
                 }
             }
+            
             self.session.finishTasksAndInvalidate()
         }
         self.task.resume()
