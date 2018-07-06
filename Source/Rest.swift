@@ -9,6 +9,24 @@ import Foundation
 import UIKit
 import SystemConfiguration
 
+/// A type representing an error value that can be thrown.
+public enum RestError: Error {
+    
+    /// Error Network not available
+    case networkNotAvailable
+    
+    /// Error 400 on login
+    case badRequest
+    
+    /// Error decoding JSON
+    case decoding(message: String)
+    
+    /// Invalid API request
+    case invalidRequest(message: String)
+}
+
+public typealias Handler<T: Decodable> = (_ data: T?, RestError?) -> Void
+
 fileprivate class Network {
      static func isAvailable() -> Bool {
         var zeroAddress = sockaddr_in()
@@ -152,7 +170,9 @@ open class Rest {
      - parameter callback: callback Closure with optional responce data, optional responce HTTPURLResponse, optional error as NSError
      - parameter response: void
      */
-    open func call(cancelToken token: CancellationToken? = nil,  _ callback: ((_ data: Data?,_ response: HTTPURLResponse?,_ error: NSError?) -> Void)?) {
+    
+    
+    open func call<T: Decodable>(cancelToken token: CancellationToken? = nil, process callback: @escaping Handler<T>) {
         
         if Network.isAvailable() {
             self.restManager.cancelToken = token
@@ -167,7 +187,7 @@ open class Rest {
             let e = NSError(domain: RestManager.errorDomain, code: 503, userInfo: ["reason" : "Internet not available"])
             Rest.log(str: "Rest Error: " + e.localizedDescription)
             DispatchQueue.main.async {
-                callback?(nil, nil, e)
+                callback(nil, RestError.networkNotAvailable)
             }
         }
     }
@@ -205,8 +225,8 @@ private class RestManager: NSObject {
     var urlParams: [Any]?
     var files: [File]?
     
-    var callback: ((_ data: Data?, _ response: HTTPURLResponse?, _ error: NSError?) -> Void)?
-    
+//    var callback: ((_ data: Decodable?, _ error: NSError?) -> Void)?
+
     var cancelToken: CancellationToken? = nil
     
     var session: URLSession!
@@ -272,13 +292,90 @@ private class RestManager: NSObject {
         self.HTTPBodyRaw = rawString
         self.HTTPBodyRawIsJSON = isJSON
     }
-    func fire(_ callback: ((_ data: Data?, _ response: HTTPURLResponse?, _ error: NSError?) -> Void)? = nil) {
-        self.callback = callback
+    func fire<T: Decodable>(_ callback: @escaping Handler<T>) {
         
         self.prepareRequest()
         self.prepareHeader()
         self.prepareBody()
-        self.fireTask()
+        
+        // Web service
+        
+        DispatchQueue.main.async {
+            if Rest.default.activityIndicatorDisplay {
+                UIApplication.shared.isNetworkActivityIndicatorVisible = true
+            }
+        }
+        
+        if let a = self.request.allHTTPHeaderFields {
+            Rest.log(str: "Rest Request HEADERS: " + a.description)
+        }
+        
+        let semaphore = DispatchSemaphore(value: 0)
+        
+        self.task = self.session.dataTask(with: self.request) { (data, response, error) -> Void in
+            
+            self.cancelToken?.resetAllHandlers()
+            
+            DispatchQueue.main.async {
+                if Rest.default.activityIndicatorDisplay {
+                    UIApplication.shared.isNetworkActivityIndicatorVisible = false
+                }
+            }
+            
+            semaphore.signal()
+            
+            if let error = error as NSError? {
+                if error.code == -999 { // NSURLErrorCancelled
+                    Rest.log(str: "Rest Cancel Manually: " + self.url)
+                } else {
+                    let e = NSError(domain: RestManager.errorDomain, code: error.code, userInfo: error.userInfo)
+                    Rest.log(str: "Rest Error: " + e.localizedDescription)
+                    DispatchQueue.main.async {
+                        callback(nil, RestError.decoding(message: error.localizedDescription))
+                    }
+                }
+            }
+            else {
+                if let a = response {
+                    Rest.log(str: "Rest Response: " + a.description)
+                }
+                
+                DispatchQueue.global(qos: .utility).async {
+                    do {
+                        if let data = data {
+                            let jsonDecoder = JSONDecoder()
+                            jsonDecoder.keyDecodingStrategy = .convertFromSnakeCase
+                            let object = try jsonDecoder.decode(T.self, from: data)
+                            
+                            DispatchQueue.main.async {
+                                callback(object, nil)
+                            }
+                            
+                            if let responceString = String(data: data, encoding: .utf8) {
+                                Rest.log(str: "Rest Response: " + responceString.description)
+                            } else {
+                                Rest.log(str: "Rest response : Unable to log responce string")
+                            }
+                        }else{
+                            DispatchQueue.main.async {
+                                callback(nil, nil)
+                            }
+                            Rest.log(str: "Rest response : ERROR data is nil from server")
+                        }
+                    } catch let error {
+                        DispatchQueue.main.async {
+                            callback(nil, RestError.decoding(message: error.localizedDescription))
+                        }
+                        Rest.log(str: "Rest response : \(error.localizedDescription)")
+                    }
+                }
+            }
+            self.session.finishTasksAndInvalidate()
+        }
+        self.task.resume()
+        if flow == .sync{
+            semaphore.wait()
+        }
     }
     private func prepareRequest() {
         
@@ -352,61 +449,6 @@ private class RestManager: NSObject {
         self.request.httpBody = data as Data
     }
     
-    private func fireTask() {
-        
-        DispatchQueue.main.async {
-            if Rest.default.activityIndicatorDisplay {
-                UIApplication.shared.isNetworkActivityIndicatorVisible = true
-            }
-        }
-        
-        if let a = self.request.allHTTPHeaderFields { Rest.log(str: "Rest Request HEADERS: " + a.description) }
-        
-        let semaphore = DispatchSemaphore(value: 0)
-        self.task = self.session.dataTask(with: self.request) { (data, response, error) -> Void in
-            
-            self.cancelToken?.resetAllHandlers()
-            
-            DispatchQueue.main.async {
-                if Rest.default.activityIndicatorDisplay {
-                    UIApplication.shared.isNetworkActivityIndicatorVisible = false
-                }
-            }
-            
-            semaphore.signal()
-            if let error = error as NSError? {
-                if error.code == -999 { // NSURLErrorCancelled
-//                    let e = NSError(domain: RestManager.errorDomain, code: error.code, userInfo: error.userInfo)
-//                    Rest.log(str: "Rest Error: " + e.localizedDescription)
-                    Rest.log(str: "Rest Cancel Manually: " + self.url)
-                } else {
-                    let e = NSError(domain: RestManager.errorDomain, code: error.code, userInfo: error.userInfo)
-                    Rest.log(str: "Rest Error: " + e.localizedDescription)
-                    DispatchQueue.main.async {
-                        self.callback?(nil, nil, e)
-                    }
-                }
-            } else {
-                if let a = response { Rest.log(str: "Rest Response: " + a.description) }
-
-                DispatchQueue.main.async {
-                    if let _data = data {
-                        if let responceString = String(data: _data, encoding: .utf8) {
-                            Rest.log(str: "Rest Response: " + responceString)
-                        } else {
-                            Rest.log(str: "Rest response : Unable to log responce string")
-                        }
-                        self.callback?(data, response as? HTTPURLResponse, nil)
-                    }
-                }
-            }
-            self.session.finishTasksAndInvalidate()
-        }
-        self.task.resume()
-        if flow == .sync{
-            semaphore.wait()
-        }
-    }
 }
 
 /**
