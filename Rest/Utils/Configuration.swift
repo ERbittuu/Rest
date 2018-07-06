@@ -9,20 +9,8 @@
 import Foundation
 
 class Configuration {
-    static let serverUrl  = "https://jsonplaceholder.typicode.com/"
     
-    
-//    All HTTP verbs are supported.
-//    View usage examples.
-//    GET     /posts
-//    GET     /posts/1
-//    GET     /posts/1/comments
-//    GET     /comments?postId=1
-//    GET     /posts?userId=1
-//    POST     /posts
-//    PUT     /posts/1
-//    PATCH     /posts/1
-//    DELETE     /posts/1
+    static let serverUrl  = "http://localhost:5000/api/"
     
     enum post: String{
         typealias RawValue = String

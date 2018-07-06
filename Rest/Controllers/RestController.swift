@@ -11,40 +11,43 @@ import UIKit
 class RestController: UIViewController {
 
     @IBOutlet weak var cancel: UIButton!
+    @IBOutlet weak var login: UIButton!
     
-    var allService = [Rest]()
-    
-    var cs : CancellationSource?
+    var cancelHandle : CancellationSource?
     
     override func viewDidLoad() {
         super.viewDidLoad()
         cancel.isHidden = true
     }
     
-    private func cancelVisibilityChange() {
-//        cancel.isHidden = allService.isEmpty
-    }
-    
-    @IBAction func getCall(_ sender: UIButton) {
+    @IBAction func loginAction(_ sender: UIButton) {
         cancel.isHidden = false
-        self.cs = WebService.shared.simpleGET{ data in
-            self.cancel.isHidden = true
+        
+        cancelHandle = Endpoint.login(email: "peter@klaven",
+                       password: "cityslicka") { (user, error) in
+                        
+                        self.cancel.isHidden = true
+                        guard let token = user?.token else {
+                            if error == nil,
+                                let error1 = user?.error {
+                                print(error1)
+                            }else{
+                                print("Unknown error")
+                            }
+                            return
+                        }
+                        
+                        // login success
+                        print(token)
         }
         
-        self.cs?.token.register {
-            print("I have cancelled request stop unwanted task here")
-        }
-    }
-    
-    @IBAction func postCall(_ sender: UIButton) {
-        cancel.isHidden = true
-        WebService.shared.simplePOST { (data) in
-
+        // Handler called when service cancelled manually
+        cancelHandle?.token.register {
+            print("login api stoped")
         }
     }
     
     @IBAction func cancelLastCall(_ sender: UIButton) {
-        
-        cs?.cancel()
+        cancelHandle?.cancel()
     }
 }
