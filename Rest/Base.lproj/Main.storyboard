@@ -6,7 +6,6 @@
     <dependencies>
         <deployment identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="14088"/>
-        <capability name="Alignment constraints with different attributes" minToolsVersion="5.1"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <scenes>
@@ -19,73 +18,30 @@
                         <autoresizingMask key="autoresizingMask"/>
                     </navigationBar>
                     <connections>
-                        <segue destination="BYZ-38-t0r" kind="relationship" relationship="rootViewController" id="Mmh-C0-AET"/>
+                        <segue destination="Q4k-gv-OWa" kind="show" id="rKD-7Z-g4j"/>
                     </connections>
                 </navigationController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="ydY-Fz-Iez" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="-1111" y="90"/>
         </scene>
-        <!--Rest-->
-        <scene sceneID="tne-QT-ifu">
+        <!--Controller-->
+        <scene sceneID="Lj0-gd-Mhf">
             <objects>
-                <viewController storyboardIdentifier="FeedViewController" automaticallyAdjustsScrollViewInsets="NO" id="BYZ-38-t0r" customClass="RestController" customModule="Rest" customModuleProvider="target" sceneMemberID="viewController">
+                <viewController id="Q4k-gv-OWa" customClass="Controller" customModule="Rest" customModuleProvider="target" sceneMemberID="viewController">
                     <layoutGuides>
-                        <viewControllerLayoutGuide type="top" id="y3c-jy-aDJ"/>
-                        <viewControllerLayoutGuide type="bottom" id="wfy-db-euE"/>
+                        <viewControllerLayoutGuide type="top" id="Fz2-4j-WNb"/>
+                        <viewControllerLayoutGuide type="bottom" id="vnh-8P-Zsn"/>
                     </layoutGuides>
-                    <view key="view" contentMode="scaleToFill" id="8bC-Xf-vdC">
-                        <rect key="frame" x="0.0" y="0.0" width="375" height="603"/>
+                    <view key="view" contentMode="scaleToFill" id="DWV-UB-dT4">
+                        <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                        <subviews>
-                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="XNQ-Oc-HHk">
-                                <rect key="frame" x="126.5" y="50" width="41" height="44"/>
-                                <fontDescription key="fontDescription" type="system" pointSize="26"/>
-                                <state key="normal" title="Get"/>
-                                <connections>
-                                    <action selector="getCall:" destination="BYZ-38-t0r" eventType="touchUpInside" id="ndV-Zd-M9h"/>
-                                </connections>
-                            </button>
-                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="RXd-pz-daR">
-                                <rect key="frame" x="207.5" y="50" width="50" height="44"/>
-                                <fontDescription key="fontDescription" type="system" pointSize="26"/>
-                                <state key="normal" title="Post"/>
-                                <connections>
-                                    <action selector="postCall:" destination="BYZ-38-t0r" eventType="touchUpInside" id="bYw-3I-1TE"/>
-                                </connections>
-                            </button>
-                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="MWp-cY-nae">
-                                <rect key="frame" x="163.5" y="132" width="48" height="30"/>
-                                <state key="normal" title="Cancel">
-                                    <color key="titleColor" name="systemRedColor" catalog="System" colorSpace="catalog"/>
-                                </state>
-                                <connections>
-                                    <action selector="cancelLastCall:" destination="BYZ-38-t0r" eventType="touchUpInside" id="Cxp-aZ-0TJ"/>
-                                </connections>
-                            </button>
-                        </subviews>
-                        <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-                        <constraints>
-                            <constraint firstItem="XNQ-Oc-HHk" firstAttribute="trailing" secondItem="8bC-Xf-vdC" secondAttribute="centerX" constant="-20" id="1Cy-Ra-jCa"/>
-                            <constraint firstItem="XNQ-Oc-HHk" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leading" constant="126.5" id="1QE-y3-jn3"/>
-                            <constraint firstItem="RXd-pz-daR" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="XNQ-Oc-HHk" secondAttribute="trailing" symbolic="YES" id="2vP-eG-9Gv"/>
-                            <constraint firstAttribute="trailing" secondItem="RXd-pz-daR" secondAttribute="trailing" constant="117.5" id="F2M-ij-1UV"/>
-                            <constraint firstItem="XNQ-Oc-HHk" firstAttribute="top" secondItem="y3c-jy-aDJ" secondAttribute="bottom" constant="50" id="Hxh-d8-Ram"/>
-                            <constraint firstItem="MWp-cY-nae" firstAttribute="top" secondItem="RXd-pz-daR" secondAttribute="bottom" constant="38" id="ZXs-W5-KAH"/>
-                            <constraint firstItem="RXd-pz-daR" firstAttribute="centerY" secondItem="XNQ-Oc-HHk" secondAttribute="centerY" id="n0Z-gV-2P4"/>
-                            <constraint firstItem="MWp-cY-nae" firstAttribute="centerX" secondItem="8bC-Xf-vdC" secondAttribute="centerX" id="ty8-UY-PeI"/>
-                        </constraints>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                     </view>
-                    <extendedEdge key="edgesForExtendedLayout"/>
-                    <navigationItem key="navigationItem" title="Rest" id="AHP-n9-Erm"/>
-                    <simulatedNavigationBarMetrics key="simulatedTopBarMetrics" prompted="NO"/>
-                    <connections>
-                        <outlet property="cancel" destination="MWp-cY-nae" id="iaL-YG-va7"/>
-                    </connections>
                 </viewController>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="4XW-cT-BDY" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="-193" y="90"/>
+            <point key="canvasLocation" x="-309" y="61"/>
         </scene>
     </scenes>
 </document>

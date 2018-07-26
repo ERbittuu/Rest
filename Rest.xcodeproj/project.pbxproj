@@ -7,23 +7,23 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		2D04C94820777CFC00D7879B /* WebService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D04C94720777CFC00D7879B /* WebService.swift */; };
+		2D04C94820777CFC00D7879B /* Web.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D04C94720777CFC00D7879B /* Web.swift */; };
 		2D04C94B20777DBE00D7879B /* Rest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D04C94A20777DBE00D7879B /* Rest.swift */; };
 		2D12C3842078A99E00B8A317 /* Configuration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D12C3832078A99E00B8A317 /* Configuration.swift */; };
 		2D45F87C2077785300A24B33 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D45F87B2077785300A24B33 /* AppDelegate.swift */; };
-		2D45F87E2077785300A24B33 /* RestController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D45F87D2077785300A24B33 /* RestController.swift */; };
+		2D45F87E2077785300A24B33 /* Controller.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D45F87D2077785300A24B33 /* Controller.swift */; };
 		2D45F8812077785300A24B33 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 2D45F87F2077785300A24B33 /* Main.storyboard */; };
 		2D45F8832077785300A24B33 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2D45F8822077785300A24B33 /* Assets.xcassets */; };
 		2D45F8862077785300A24B33 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 2D45F8842077785300A24B33 /* LaunchScreen.storyboard */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		2D04C94720777CFC00D7879B /* WebService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebService.swift; sourceTree = "<group>"; };
+		2D04C94720777CFC00D7879B /* Web.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Web.swift; sourceTree = "<group>"; };
 		2D04C94A20777DBE00D7879B /* Rest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Rest.swift; sourceTree = "<group>"; };
 		2D12C3832078A99E00B8A317 /* Configuration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Configuration.swift; sourceTree = "<group>"; };
 		2D45F8782077785300A24B33 /* Rest.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Rest.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		2D45F87B2077785300A24B33 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
-		2D45F87D2077785300A24B33 /* RestController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestController.swift; sourceTree = "<group>"; };
+		2D45F87D2077785300A24B33 /* Controller.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Controller.swift; sourceTree = "<group>"; };
 		2D45F8802077785300A24B33 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		2D45F8822077785300A24B33 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		2D45F8852077785300A24B33 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
@@ -53,7 +53,7 @@
 		2D04C94620777CEB00D7879B /* Services */ = {
 			isa = PBXGroup;
 			children = (
-				2D04C94720777CFC00D7879B /* WebService.swift */,
+				2D04C94720777CFC00D7879B /* Web.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -66,24 +66,10 @@
 			path = Source;
 			sourceTree = "<group>";
 		};
-		2D04C94E2077984700D7879B /* Views */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = Views;
-			sourceTree = "<group>";
-		};
-		2D04C94F2077985600D7879B /* Model */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = Model;
-			sourceTree = "<group>";
-		};
 		2D04C9502077986B00D7879B /* Controllers */ = {
 			isa = PBXGroup;
 			children = (
-				2D45F87D2077785300A24B33 /* RestController.swift */,
+				2D45F87D2077785300A24B33 /* Controller.swift */,
 			);
 			path = Controllers;
 			sourceTree = "<group>";
@@ -108,8 +94,6 @@
 		2D45F87A2077785300A24B33 /* Rest */ = {
 			isa = PBXGroup;
 			children = (
-				2D04C94F2077985600D7879B /* Model */,
-				2D04C94E2077984700D7879B /* Views */,
 				2D04C9502077986B00D7879B /* Controllers */,
 				2D04C94520777C8D00D7879B /* Utils */,
 				2D45F87B2077785300A24B33 /* AppDelegate.swift */,
@@ -193,8 +177,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				2D04C94820777CFC00D7879B /* WebService.swift in Sources */,
-				2D45F87E2077785300A24B33 /* RestController.swift in Sources */,
+				2D04C94820777CFC00D7879B /* Web.swift in Sources */,
+				2D45F87E2077785300A24B33 /* Controller.swift in Sources */,
 				2D12C3842078A99E00B8A317 /* Configuration.swift in Sources */,
 				2D45F87C2077785300A24B33 /* AppDelegate.swift in Sources */,
 				2D04C94B20777DBE00D7879B /* Rest.swift in Sources */,
