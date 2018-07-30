@@ -9,162 +9,220 @@
 
 import Foundation
 
-class Web {
+public enum End: String {
+    case login
+    case register
+    case data
+    case users
     
-    private init() { }
-    
-    static var shared : Web {
-        let service = Web()
-        Rest.default.showLogs = true
-        return service
+    var route: String {
+        return "/\(self.rawValue)"
     }
-    
-    func fetch<T: Decodable>(end: End,_ callback: @escaping Handler<T>) {
-//        
-//        switch end {
-//        case .user(id: let userid):
-//            
-//            print(userid ?? "")
-//            
-//        case .login(let username, let password):
-////            
-////            Rest.prepare(HTTPMethod: .POST, url: end.point)
-////                .setParams(["email": "peter@klaven", "password": "cityslicka"])
-////                .call { (decode, error) in
-////                    callback(decode, error)
-////            }
-//            //            Rest.prepare(HTTPMethod: .GET, url: Instagram.API.baseURL)
-//            //                .setURLParams(["users", userId, "media", "recent"])
-//            //                .setParams(["access_token": Instagram.shared.retrieveAccessToken() ?? ""])
-//            //                .call { (decode, error) in
-//            //                    success(decode, error)
-//            //            }
-//            
-//        default:
-//            return
-//        }
-//        
-    }
-////
-////    func simpleGET(with completion: @escaping ((_ data : Data?) -> ())) -> CancellationSource {
-////
-////        let source = CancellationSource()
-////        //    GET     /posts
-////        Rest.prepare(HTTPMethod: .GET, url: Configuration.post.posts.url)
-////            .call(cancelToken: source.token) { (data, responce, error) in
-////
-////        }
-////        return source
-////    }
-////
-////    func simplePOST(with completion: @escaping ((_ data : Data?) -> ())) {
-////
-////        //    POST     /posts
-////       Rest.prepare(HTTPMethod: .POST, url: Configuration.post.posts.url)
-////            .call { (data, responce, error) in
-////                completion(data)
-////                if error == nil {
-////                    print(data ?? "No data")
-////                }else{
-////                    print(error?.localizedDescription ?? "error")
-////                }
-////        }
-////    }
 }
 
+struct User: Decodable {
+    let id: Int
+    let first_name: String
+    let last_name: String
+    let avatar: String
+}
 
-public enum End {
-    case login(username: String, password: String)
-    case register(username: String, password: String)
-    case data(id: String?)
-    case user(id: String?)
+struct Info: Decodable {
+    let id: Int
+    let name: String
+    let year: Int
+    let color: String
+    let pantone_value: String
+}
+
+class Request {
     
-    var point: String {
-        switch self {
-        case .login(username: _, password: _):
-            return "/login"
-        case .register(username: _, password: _):
-            return "/register"
-        case .data(id: _):
-            return "/unknown"
-        case .user(id: _):
-            return "/users"
+    static func login(email: String, password: String, callback: @escaping (_ token: String?, _ error: String?) -> ()) {
+        
+        struct LoginResponse: Decodable {
+            let token: String?
+            let error: String?
+        }
+        
+        var option = RestOptions(route: End.login.route, method: .POST)
+        option.parameter = [ "email": email, "password": password]
+        option.expectedStatusCodes = [400, 200]
+        
+        Rest.fetchData(with: option) { (result) in
+
+            switch(result) {
+                case .success(let data):
+                    
+                    // decode response with Decodable
+                    guard let loginResponse = try? JSONDecoder().decode(LoginResponse.self, from: data) else {
+                        callback(nil, "Error: Couldn't decode data into LoginResponse")
+                        return
+                    }
+                    if let token = loginResponse.token {
+                        callback(token, nil)
+                    }else {
+                        callback(nil, loginResponse.error!)
+                    }
+                case .failure(let error):
+                    callback(nil, error.localizedDescription)
+            }
         }
     }
     
- 
-//    public static func user(fromUser userId: String,
-//                                   nextUrl: String? = nil,
-//                                   success: @escaping Handler<PhotoResponse>) {
-//
-//        print(nextUrl ?? "sa")
-//        if let nextUrl = nextUrl {
-//            Rest.prepare(HTTPMethod: .GET, url: nextUrl)
-//                .call { (decode, error) in
-//                    success(decode, error)
-//            }
-//        }else{
-//            Rest.prepare(HTTPMethod: .GET, url: Instagram.API.baseURL)
-//                .setURLParams(["users", userId, "media", "recent"])
-//                .setParams(["access_token": Instagram.shared.retrieveAccessToken() ?? ""])
-//                .call { (decode, error) in
-//                    success(decode, error)
-//            }
-//        }
-//
+    static func register(email: String, password: String, callback: @escaping (_ token: String?, _ error: String?) -> ()) {
+
+        struct RegisterResponse: Decodable {
+            let token: String?
+            let error: String?
+        }
+        
+        var option = RestOptions(route: End.register.route, method: .POST)
+        option.parameter = [ "email": email, "password": password]
+        option.expectedStatusCodes = [400, 201]
+        
+        Rest.fetchData(with: option) { (result) in
+            
+            switch(result) {
+            case .success(let data):
+                // decode response with Decodable
+                guard let registerResponse = try? JSONDecoder().decode(RegisterResponse.self, from: data) else {
+                    callback(nil, "Error: Couldn't decode data into RegisterResponse")
+                    return
+                }
+                if let token = registerResponse.token {
+                    callback(token, nil)
+                }else {
+                    callback(nil, registerResponse.error!)
+                }
+            case .failure(let error):
+                callback(nil, error.localizedDescription)
+            }
+        }
+    }
+    
+//    {
+//    "page": 2,
+//    "per_page": 3,
+//    "total": 12,
+//    "total_pages": 4,
+//    "data": [
+//    {
+//    "id": 4,
+//    "first_name": "Eve",
+//    "last_name": "Holt",
+//    "avatar": "https://s3.amazonaws.com/uifaces/faces/twitter/marcoramires/128.jpg"
+//    },
+//    {
+//    "id": 5,
+//    "first_name": "Charles",
+//    "last_name": "Morris",
+//    "avatar": "https://s3.amazonaws.com/uifaces/faces/twitter/stephenmoon/128.jpg"
+//    },
+//    {
+//    "id": 6,
+//    "first_name": "Tracey",
+//    "last_name": "Ramos",
+//    "avatar": "https://s3.amazonaws.com/uifaces/faces/twitter/bigmancho/128.jpg"
 //    }
-}
-
-
-
-/*
-
-/// Get the most recent media published by a user.
-///
-/// - parameter userId: The ID of the user whose recent media to retrieve, or "self" to reference the currently authenticated user.
-/// - parameter success: The callback called after a correct retrieval.
-/// - parameter failure: The callback called after an incorrect retrieval.
-///
-/// - important: It requires *public_content* scope when getting recent media published by a user other than yours.
-public static func recentMedia(fromUser userId: String,
-                               nextUrl: String? = nil,
-                               success: @escaping Handler<PhotoResponse>) {
-    
-    print(nextUrl ?? "sa")
-    if let nextUrl = nextUrl {
-        Rest.prepare(HTTPMethod: .GET, url: nextUrl)
-            .call { (decode, error) in
-                success(decode, error)
+//    ]
+//    }
+//
+    static func users(id: Int, isPageId: Bool, callback: @escaping (_ users: [User], _ error: String?) -> ()) {
+        
+        struct UserListResponse: Decodable {
+            let page: Int? = nil
+            let per_page: Int? = nil
+            let total: Int? = nil
+            let total_pages: Int? = nil
+            let data: [User]
         }
-    }else{
-        Rest.prepare(HTTPMethod: .GET, url: Instagram.API.baseURL)
-            .setURLParams(["users", userId, "media", "recent"])
-            .setParams(["access_token": Instagram.shared.retrieveAccessToken() ?? ""])
-            .call { (decode, error) in
-                success(decode, error)
+        
+        var option = RestOptions(route: End.users.route, method: .GET)
+        
+        if isPageId {
+            // users page with page id
+            option.parameter = ["page": id]
+        } else {
+            // user with id
+            option.URLParams = [id]
+        }
+        
+        option.expectedStatusCodes = [200, 404]
+        
+        Rest.fetchData(with: option) { (result) in
+            
+            switch(result) {
+            case .success(let data):
+                // decode response with Decodable
+                guard let userListResponse = try? JSONDecoder().decode(UserListResponse.self, from: data) else {
+                    callback([], "Error: Couldn't decode data into UserListResponse")
+                    return
+                }
+                callback(userListResponse.data, nil)
+            case .failure(let error):
+                callback([], error.localizedDescription)
+            }
+        }
+    }
+    
+    static func data(id: Int, isPageId: Bool, callback: @escaping (_ users: [Info], _ error: String?) -> ()) {
+        
+        struct InfoListResponse: Decodable {
+            let page: Int? = nil
+            let per_page: Int? = nil
+            let total: Int? = nil
+            let total_pages: Int? = nil
+            let data: [Info]
+        }
+        
+        var option = RestOptions(route: End.data.route, method: .GET)
+        
+        if isPageId {
+            // users page with page id
+            option.parameter = ["page": id]
+        } else {
+            // user with id
+            option.URLParams = [id]
+        }
+        
+        option.expectedStatusCodes = [200, 404]
+        
+        Rest.fetchData(with: option) { (result) in
+            
+            switch(result) {
+            case .success(let data):
+                // decode response with Decodable
+                guard let userListResponse = try? JSONDecoder().decode(InfoListResponse.self, from: data) else {
+                    callback([], "Error: Couldn't decode data into InfoListResponse")
+                    return
+                }
+                callback(userListResponse.data, nil)
+            case .failure(let error):
+                callback([], error.localizedDescription)
+            }
         }
     }
     
 }
  
- login post success
- login post un success
- 
- register success
- register un success
- 
- delay response by some time
- 
- data list
- data by id found
- data by id not found
- 
- users list
- user by id found
- user by id not found
- 
- user create
- user update
- user delete
- 
- */
+// login post success
+// login post un success
+//
+// register success
+// register un success
+//
+// delay response by some time
+//
+// data list
+// data by id found
+// data by id not found
+//
+// users list
+// user by id found
+// user by id not found
+//
+// user create
+// user update
+// user delete
+//
+// */

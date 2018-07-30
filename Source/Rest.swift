@@ -9,20 +9,41 @@ import Foundation
 import UIKit
 import SystemConfiguration
 
+/// Run block in background queue
 fileprivate func doInBackground(_ block: @escaping () -> ()) {
     DispatchQueue.global(qos: .default).async {
         block()
     }
 }
 
+/// Run block in main queue
 fileprivate func doOnMain(_ block: @escaping () -> ()) {
     DispatchQueue.main.async {
         block()
     }
 }
 
-public typealias Handler<T: Decodable> = (_ data: T?, RestError?) -> Void
+fileprivate func < <T : Comparable>(lhs: T?, rhs: T?) -> Bool {
+    switch (lhs, rhs) {
+    case let (l?, r?):
+        return l < r
+    case (nil, _?):
+        return true
+    default:
+        return false
+    }
+}
 
+fileprivate func > <T : Comparable>(lhs: T?, rhs: T?) -> Bool {
+    switch (lhs, rhs) {
+    case let (l?, r?):
+        return l > r
+    default:
+        return rhs < lhs
+    }
+}
+
+/// Run block in main queue
 fileprivate class Network {
      static func isAvailable() -> Bool {
         var zeroAddress = sockaddr_in()
@@ -65,10 +86,16 @@ open class Rest {
             return Rest.indexRequest
         }
         
-        /// Network Activity Indicator display default is true
+        /// Network Activity Indicator display default is true iOS Only
         public static var activityIndicatorDisplay : Bool = true
-
+        
+        /// The expected status call for the call, Default is from any.
+        public static var statusCodes: [Int]?
+        
+        /// The NSURLRequest CachePolicy for Rest request
+        public static var cachePolicy = NSURLRequest.CachePolicy.reloadIgnoringLocalCacheData
     }
+
     private static var indexRequest = 0
     
     private var restManager: RestManager!
@@ -83,27 +110,25 @@ open class Rest {
         }
     }
     
-    private static func getInstance() -> Rest {
-        let p = Rest()
-        prepareNextIndex()
-        return p
-    }
-    
-    open func fetch<D: Decodable>(restOption option: Options,
-                                 cancelToken token: CancellationToken? = nil,
-                                 callback: @escaping (Result<D>, HTTPURLResponse?) -> ()) {
+    open static func fetchData(with option: RestOptions,
+                                 andCancelToken token: CancellationToken? = nil,
+                                 callback: @escaping (Result<Data>) -> ()) {
         
-        guard let url = Rest.default.origin else {
-            doOnMain { callback(.failure(RestError.invalidRequest(message: "Please set origin in default setting")), nil) }
+        guard var url = Rest.default.origin else {
+            doOnMain { callback(.failure(RestError.invalidRequest(message: "Please set origin in Rest default setting"))) }
             return
         }
+        
+        // set route 
+        url.append(option.route)
         
         if !Network.isAvailable() {
-            doOnMain { callback(.failure(RestError.networkNotAvailable(message: "Internet not available")), nil) }
+            doOnMain { callback(.failure(RestError.networkError(message: "Internet not available"))) }
             return
         }
         
-        let p = Rest.getInstance()
+        let p = Rest()
+        Rest.prepareNextIndex()
         p.restManager = RestManager(url: url, method: option.requestType, timeout: option.requestTimeoutSeconds)
         p.restManager.setOption(option: option)
         
@@ -118,24 +143,96 @@ open class Rest {
     }
 }
 
-private func < <T : Comparable>(lhs: T?, rhs: T?) -> Bool {
-    switch (lhs, rhs) {
-    case let (l?, r?):
-        return l < r
-    case (nil, _?):
-        return true
-    default:
-        return false
+/// Errors related to the networking for the `Rest`
+public enum RestError: Error {
+    /// Indicates the server responded with an unexpected status code.
+    /// - parameter Int: The status code the server respodned with.
+    /// - parameter Data?: The raw returned data from the server
+    case unexpectedStatusCode(Int, Data?)
+    
+    /// Indicates that the server responded using an unknown protocol.
+    /// - parameter Data?: The raw returned data from the server
+    case badResponse(Data?)
+    
+    /// Indicates the server's response could not be deserialized using the given Deserializer.
+    /// - parameter Data: The raw returned data from the server
+    case malformedResponse(Data)
+    
+    /// Inidcates the server did not respond to the request.
+    case noResponse
+    
+    /// Invalid request
+    case invalidRequest(message: String)
+    
+    /// Error Network not available
+    case networkError(message: String)
+}
+
+/// Options for `Rest` calls. Allows you to set an expected HTTP status code, HTTP Headers, or to modify the request timeout.
+public struct RestOptions {
+    
+    /// The route for the request
+    public var route: String
+    
+    /// The requestType for the request
+    public var requestType: HTTPMethod
+    
+    /// The expected status call for the call, Default is from Rest default setting.
+    public var expectedStatusCodes: [Int]? = Rest.default.statusCodes
+    
+    /// The amount of time in `seconds` until the request times out, Default is from Rest default setting.
+    public var requestTimeoutSeconds = Rest.default.timeout
+    
+    /// An optional set of params to to send
+    /// What params you want to add in the request. Rest will do things right whether methed is GET or POST.
+    public var parameter : [String: Any]?
+    
+    /// An optional set of URLParams to send : like user/4/post/10
+    /// What URLParams you want to add in the request. Rest will do things right whether methed is GET or POST.
+    public var URLParams : [Any]?
+    
+    /// Add files to Rest, POST only
+    public var files: [File]?
+    
+    /// An optional set of HTTP Headers to send with the call.
+    public var httpHeaders: [String : String]?
+    
+    /// An optional set of HTTP Raw body to send with the call.
+    /// is JSON or not: will set "Content-Type" of HTTP request to "application/json" or "text/plain;charset=UTF-8"
+    public var HTTPBodyRaw: (body: String, isJSON: Bool)?
+    
+    /// The request flow will be sync or aysnc, default to aysnc
+    public var flow: Flow = .async
+    
+    public init(route: String?, method: HTTPMethod) {
+        self.route = route ?? ""
+        self.requestType = method
     }
 }
 
-private func > <T : Comparable>(lhs: T?, rhs: T?) -> Bool {
-    switch (lhs, rhs) {
-    case let (l?, r?):
-        return l > r
-    default:
-        return rhs < lhs
-    }
+/// A typed Result with 2 cases: Success or Failure. If an operation was successful, then the resulting data will be encapsulated. If the operation was a failure, then an `ErrorType` will be encapsulated.
+public enum Result<Data> {
+    
+    /// Indicates a successful operation.
+    /// - parameter T: The resulting data from the operation.
+    case success(Data)
+    
+    /// Indicates a failed operation.
+    /// - parameter ErrorType: The error from the operation.
+    case failure(Error)
+    
+//    /// Gets the encapsulated value from the operation.
+//    ///
+//    /// - returns: The succesful `T` parameter this result is encapsulating.
+//    /// - throws: Throws the error if the operation was a failure.
+//    public func value() -> Data? {
+//        switch(self) {
+//        case .success(let value):
+//            return value
+//        case .failure(let error):
+//            return error.localizedDescription
+//        }
+//    }
 }
 
 private class RestManager: NSObject {
@@ -152,8 +249,6 @@ private class RestManager: NSObject {
     
     var expectedStatusCode: [Int]?
     
-//    var callback: ((_ data: Decodable?, _ error: NSError?) -> Void)?
-
     var cancelToken: CancellationToken? = nil
     
     var session: URLSession!
@@ -187,7 +282,7 @@ private class RestManager: NSObject {
         return "Rest"
     }()
     
-    init(url: String, method: HTTPMethod!, timeout: Double) {
+    fileprivate init(url: String, method: HTTPMethod!, timeout: Double) {
         self.url = url
         self.request = URLRequest(url: URL(string: url)!)
         self.method = method.rawValue
@@ -199,7 +294,7 @@ private class RestManager: NSObject {
         self.session = Foundation.URLSession(configuration: sessionConfiguration, delegate: nil, delegateQueue: Foundation.URLSession.shared.delegateQueue)
     }
     
-    func setOption(option : Options) {
+    func setOption(option : RestOptions) {
         self.flow = option.flow
         self.params = option.parameter
         self.urlParams = option.URLParams ?? nil
@@ -216,7 +311,7 @@ private class RestManager: NSObject {
         
     }
     
-    func makeCall<T: Decodable>(callback: @escaping (Result<T>, HTTPURLResponse?) -> ()){
+    func makeCall(callback: @escaping (Result<Data>) -> ()){
         
         self.prepareRequest()
         self.prepareHeader()
@@ -228,13 +323,26 @@ private class RestManager: NSObject {
                 UIApplication.shared.isNetworkActivityIndicatorVisible = true
             }
         }
-        
+
         if let a = self.request.allHTTPHeaderFields {
             Rest.log(str: "Rest Request HEADERS: " + a.description)
         }
-   
+       
+        if let params = self.params, params.count > 0 {
+            Rest.log(str: "Rest Request PARAMETER: \(params)")
+        }
+        
+        if let files = self.files, files.count > 0 {
+            Rest.log(str: "Rest Request Files: \(files.map { $0.name })")
+        }
+        
+        if self.HTTPBodyRaw.count > 0 {
+            Rest.log(str: "Rest Request HTTPBodyRaw: " + self.HTTPBodyRaw)
+        }
+        
         let semaphore = DispatchSemaphore(value: 0)
         
+        let started = Date() // start time
         self.task = self.session.dataTask(with: self.request) { (data, response, error) -> Void in
             
             self.cancelToken?.resetAllHandlers()
@@ -249,48 +357,55 @@ private class RestManager: NSObject {
             
             if let error = error as NSError? {
                 if error.code == -999 { // NSURLErrorCancelled
-                    Rest.log(str: "Rest Cancel Manually: " + self.url)
+                    Rest.log(str: "Rest Request Cancel Manually: " + self.url)
                 } else {
-                    let e = NSError(domain: RestManager.errorDomain, code: error.code, userInfo: error.userInfo)
-                    Rest.log(str: "Rest Error: " + e.localizedDescription)
-                    doOnMain {
-                        callback(.failure(error), (response as! HTTPURLResponse))
-                    }
+                    Rest.log(str: "Rest Request: Error " + error.localizedDescription)
                 }
+                doOnMain { callback(.failure(error)) }
             }
             else {
-                if let a = response {
-                    Rest.log(str: "Rest Response: " + a.description)
-                }
                 
                 doInBackground {
-                    if let err = error {
-                        callback(.failure(err), nil)
-                        return
-                    }
-                    
+
                     guard let httpResponse = response as? HTTPURLResponse else {
-                        callback(.failure(RestError.badResponse(data)), nil)
+                        Rest.log(str: "Rest Response: Failed with badResponse")
+                        doOnMain { callback(.failure(RestError.badResponse(data))) }
                         return
                     }
                     
                     if let expectedStatusCode = self.expectedStatusCode,
-                        expectedStatusCode.count > 0, expectedStatusCode.contains(httpResponse.statusCode) {
-                        callback(.failure(RestError.unexpectedStatusCode(httpResponse.statusCode, data)), httpResponse)
+                        expectedStatusCode.count > 0,
+                        !expectedStatusCode.contains(httpResponse.statusCode) {
+                        Rest.log(str: "Rest Response: Failed with bad statusCode \(httpResponse.statusCode)")
+                        doOnMain { callback(.failure(RestError.unexpectedStatusCode(httpResponse.statusCode, data))) }
                         return
                     }
+                    
+                    Rest.log(str: "Rest Response: Success with statusCode (\(httpResponse.statusCode)), Request Time: [\(Date().timeIntervalSince(started))]")
                     
                     guard let returnedData = data else {
-                        callback(.failure(RestError.noResponse), httpResponse)
+                        Rest.log(str: "Rest Response: nil data received")
+                        doOnMain { callback(.success(Data())) }
                         return
                     }
                     
-                    do {
-                        callback(.success(try JSONDecoder().decode(T.self, from: returnedData)), httpResponse)
-                    } catch {
-                        callback(.failure(RestError.malformedResponse(returnedData)), nil)
+                    func getprettyPrinted(data: Data) -> String? {
+                        do {
+                            let dic = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any]
+                            let data: Data = try JSONSerialization.data(withJSONObject: dic ?? [:], options: .prettyPrinted)
+                            return String(data: data, encoding: .utf8)
+                        } catch {
+                            return nil
+                        }
                     }
-                
+                    
+                    if let string = getprettyPrinted(data: returnedData) {
+                        Rest.log(str: "Rest Response: \(string)")
+                    } else {
+                        Rest.log(str: "Rest Response: Unable to decode in redable string")
+                    }
+                    
+                    doOnMain { callback(.success(returnedData)) }
                 }
             }
             self.session.finishTasksAndInvalidate()
@@ -304,7 +419,8 @@ private class RestManager: NSObject {
     private func prepareRequest() {
         
         if self.urlParams?.count > 0 {
-            url = url + RestHelper.prepareURLParams(urlParams!)
+            let slice = RestHelper.prepareURLParams(urlParams!)
+            url = url + ((url.last == "/") ? slice : "/" + slice)
         }
         
         if self.method == "GET" && self.params?.count > 0 {
@@ -316,8 +432,9 @@ private class RestManager: NSObject {
             self.request = URLRequest(url: URL(string: url)!)
         }
         
-        self.request.cachePolicy = NSURLRequest.CachePolicy.reloadIgnoringLocalCacheData
+        self.request.cachePolicy = Rest.default.cachePolicy
         self.request.httpMethod = self.method
+        Rest.log(str: "Rest Request: \(self.flow)[\(self.method!)] -> \(url!)")
     }
     
     private func prepareHeader() {
@@ -337,6 +454,7 @@ private class RestManager: NSObject {
             self.request.setValue(i.1, forHTTPHeaderField: i.0)
         }
     }
+    
     private func prepareBody() {
         let data = NSMutableData()
         if self.HTTPBodyRaw != "" {
@@ -377,37 +495,30 @@ private class RestManager: NSObject {
     
 }
 
-/**
- *  HTTP method enum for Rest
- */
+///  HTTP method enum for Rest
 public enum HTTPMethod: String {
     case DELETE, GET, HEAD, OPTIONS, PATCH, POST, PUT
 }
 
-/**
- *  Flow of web service
- */
+/// Flow of web request
 public enum Flow {
     case async, sync
 }
 
-/**
- *  the File struct for Rest to upload
- */
+/// The File struct for Rest to upload POST Only
 public struct File {
     fileprivate let name: String
     fileprivate let nameWithType: String
     fileprivate let url: URL?
     fileprivate let data: Data?
     
-    /**
-     the only init method of File
-     
-     - parameter name:       Name of file which is uploaded
-     - parameter url:        URL of file
-     
-     - returns: a File object
-     */
+
+///     The only init method of File
+///
+///     - parameter name:       Name of file which is uploaded
+///     - parameter url:        URL of file
+///
+///     - returns: a File object
     public init(name: String, url: URL) {
         self.name = name
         self.url = url
@@ -415,15 +526,14 @@ public struct File {
         self.nameWithType = NSString(string: url.description).lastPathComponent
     }
     
-    /**
-     the only init method of File
-     
-     - parameter name:       Name of file which is uploaded
-     - parameter url:        data of file
-     - parameter url:        Type of file
-     
-     - returns: a File object
-     */
+
+///     The only init method of File
+///
+///     - parameter name:       Name of file which is uploaded
+///     - parameter url:        data of file
+///     - parameter url:        Type of file
+///
+///     - returns: a File object
     public init(name:String, data: Data, type: String) {
         self.name = name
         self.data = data
@@ -437,9 +547,7 @@ private extension String {
     var nsdata: Data {
         return self.data(using: String.Encoding.utf8)!
     }
-}
-
-private extension String {
+    
     /// return base64 string of self String
     var base64: String! {
         let utf8EncodeData: Data! = self.data(using: String.Encoding.utf8, allowLossyConversion: true)
@@ -448,6 +556,7 @@ private extension String {
     }
 }
 
+// Rest helper class
 private class RestHelper {
     // add prepareParams
     static func prepareParams(_ parameters: [String: Any]) -> String {
@@ -462,7 +571,6 @@ private class RestHelper {
     
     // add prepare URL Params
     static func prepareURLParams(_ parameters: [Any]) -> String {
-        
         let list = parameters.map {
             String(describing: $0)
         }
@@ -499,19 +607,16 @@ private class RestHelper {
     }
 }
 
-// Cancel request
-
+/// Cancel request
 enum State {
     case cancelled
     case pending(CancellationSource)
 }
 
-/**
- A `CancellationToken` indicates if cancellation of "something" was requested.
- Can be passed around and checked by whatever wants to be cancellable.
- 
- To create a cancellation token, use `CancellationTokenSource`.
- */
+/// A `CancellationToken` indicates if cancellation of "something" was requested.
+/// Can be passed around and checked by whatever wants to be cancellable.
+///
+/// To create a cancellation token, use `CancellationTokenSource`.
 public struct CancellationToken {
     
     private weak var source: CancellationSource?
@@ -540,63 +645,35 @@ public struct CancellationToken {
     }
 }
 
-/**
- A `CancellationTokenSource` is used to create a `CancellationToken`.
- The created token can be set to "cancellation requested" using the `cancel()` method.
- */
+/// A `CancellationTokenSource` is used to create a `CancellationToken`.
+/// The created token can be set to "cancellation requested" using the `cancel()` method.
 public class CancellationSource {
     
     private let internalState: InternalState
-    fileprivate var isCancellationRequested: Bool {
-        return internalState.readCancelled()
-    }
+    fileprivate var isCancellationRequested: Bool { return internalState.readCancelled() }
     
-    public init() {
-        internalState = InternalState()
-    }
-    
-    deinit {
-        tryCancel()
-    }
-    
-    public var token: CancellationToken {
-        return CancellationToken(source: self)
-    }
-    
-    fileprivate func resetAllHandlers() {
-        internalState.removeHandlers()
-    }
+    public init() { internalState = InternalState() }
+    deinit { tryCancel() }
+    public var token: CancellationToken { return CancellationToken(source: self) }
+    fileprivate func resetAllHandlers() { internalState.removeHandlers() }
     
     fileprivate func register(_ handler: @escaping () -> Void) {
-        if let handler = internalState.addHandler(handler) {
-            handler()
-        }
+        if let handler = internalState.addHandler(handler) { handler() }
     }
     
-    public func cancel() {
-        tryCancel()
-    }
+    public func cancel() { tryCancel() }
     
     fileprivate func cancelAfter(deadline dispatchTime: DispatchTime) {
-        // On a background queue
-        let queue = DispatchQueue.global(qos: .userInitiated)
-        
-        queue.asyncAfter(deadline: dispatchTime) { [weak self] in
+        DispatchQueue.global(qos: .userInitiated).asyncAfter(deadline: dispatchTime) { [weak self] in // On a background queue
             self?.tryCancel()
         }
     }
     
-    public func cancelAfter(timeInterval: TimeInterval) {
-        cancelAfter(deadline: .now() + timeInterval)
-    }
+    public func cancelAfter(timeInterval: TimeInterval) { cancelAfter(deadline: .now() + timeInterval) }
     
     fileprivate func tryCancel() {
         let handlers = internalState.tryCancel()
-        
-        // Call all previously scheduled handlers
-        for handler in handlers {
-            handler()
-        }
+        for handler in handlers { handler() } // Call all previously scheduled handlers
     }
 }
 
@@ -604,28 +681,21 @@ extension CancellationSource {
     typealias Handler = () -> Void
     
     fileprivate class InternalState {
-        private let lock = NSLock()
-        private var cancelled = false
-        private var handlers: [() -> Void] = []
+        let lock = NSLock()
+        var cancelled = false
+        var handlers: [() -> Void] = []
         
         func readCancelled() -> Bool {
             lock.lock(); defer { lock.unlock() }
-            
             return cancelled
         }
         
         func tryCancel() -> [Handler] {
             lock.lock(); defer { lock.unlock() }
-            
-            if cancelled {
-                return []
-            }
-            
+            if cancelled { return [] }
             let handlersToExecute = handlers
-            
             cancelled = true
             handlers = []
-            
             return handlersToExecute
         }
         
@@ -636,101 +706,11 @@ extension CancellationSource {
         
         func addHandler(_ handler: @escaping Handler) -> Handler? {
             lock.lock(); defer { lock.unlock() }
-            
             if !cancelled {
                 handlers.append(handler)
                 return nil
             }
-            
             return handler
-        }
-    }
-}
-
-/// Errors related to the networking for the `RestController`
-public enum RestError: Error {
-    /// Indicates the server responded with an unexpected status code.
-    /// - parameter Int: The status code the server respodned with.
-    /// - parameter Data?: The raw returned data from the server
-    case unexpectedStatusCode(Int, Data?)
-    
-    /// Indicates that the server responded using an unknown protocol.
-    /// - parameter Data?: The raw returned data from the server
-    case badResponse(Data?)
-    
-    /// Indicates the server's response could not be deserialized using the given Deserializer.
-    /// - parameter Data: The raw returned data from the server
-    case malformedResponse(Data)
-    
-    /// Inidcates the server did not respond to the request.
-    case noResponse
-    
-    /// Invalid request
-    case invalidRequest(message: String)
-
-    /// Error Network not available
-    case networkNotAvailable(message: String)
-}
-
-/// Options for `Rest` calls. Allows you to set an expected HTTP status code, HTTP Headers, or to modify the request timeout.
-public struct Options {
-    
-    /// The requestType for the request, defaults is get
-    public var requestType: HTTPMethod = .GET
-    
-    /// The expected status call for the call, defaults to allowing any.
-    public var expectedStatusCodes: [Int]?
-    
-    /// The amount of time in `seconds` until the request times out.
-    public var requestTimeoutSeconds = Rest.default.timeout
-    
-    /// An optional set of params to to send
-    /// What params you want to add in the request. Rest will do things right whether methed is GET or POST.
-    public var parameter : [String: Any]?
-    
-    /// An optional set of URLParams to send : like user/4/post/10
-    /// What URLParams you want to add in the request. Rest will do things right whether methed is GET or POST.
-    public var URLParams : [Any]?
-    
-    /// Add files to Rest, POST only
-    public var files: [File]?
-    
-    /// An optional set of HTTP Headers to send with the call.
-    public var httpHeaders: [String : String]?
-    
-    /// An optional set of HTTP Raw body to send with the call.
-    /// is JSON or not: will set "Content-Type" of HTTP request to "application/json" or "text/plain;charset=UTF-8"
-    public var HTTPBodyRaw: (body: String, isJSON: Bool)?
-    
-    /// The request will call to sync or aysnc, default to aysnc
-    public var flow: Flow = .async
-    
-    public init() {}
-}
-
-
-
-/// A typed Result with 2 cases: Success or Failure. If an operation was successful, then the resulting data will be encapsulated. If the operation was a failure, then an `ErrorType` will be encapsulated.
-public enum Result<T> {
-    
-    /// Indicates a successful operation.
-    /// - parameter T: The resulting data from the operation.
-    case success(T)
-    
-    /// Indicates a failed operation.
-    /// - parameter ErrorType: The error from the operation.
-    case failure(Error)
-    
-    /// Gets the encapsulated value from the operation.
-    ///
-    /// - returns: The succesful `T` parameter this result is encapsulating.
-    /// - throws: Throws the error if the operation was a failure.
-    public func value() throws -> T {
-        switch(self) {
-        case .success(let value):
-            return value
-        case .failure(let error):
-            throw error
         }
     }
 }
