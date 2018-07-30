@@ -229,7 +229,62 @@ class Request {
             }
         }
     }
+ 
+    static func updateUser(info: (name : String, job: String), id: Int, callback: @escaping (_ success: Bool, _ error: String?) -> ()) {
+        
+        struct UpdateResponse: Decodable {
+            let name: String
+            let job: String
+            let updatedAt: String
+        }
+        
+        var option = RestOptions(route: End.users.route, method: .PUT)
+        
+        // user with id
+        option.URLParams = [id]
+        
+        // update data
+        option.parameter = ["name": info.name, "job": info.job]
+        
+        option.expectedStatusCodes = [200, 404]
+        
+        Rest.fetchData(with: option) { (result) in
+            
+            switch(result) {
+            case .success(let data):
+                // decode response with Decodable
+                guard let userListResponse = try? JSONDecoder().decode(UpdateResponse.self, from: data) else {
+                    callback(false, "Error: Couldn't decode data into UpdateResponse")
+                    return
+                }
+                print("data successfully updatedAt \(userListResponse.updatedAt)")
+                callback(true, nil)
+            case .failure(let error):
+                callback(false, error.localizedDescription)
+            }
+        }
+    }
     
+    static func deleteUser(id: Int, callback: @escaping (_ success: Bool, _ error: String?) -> ()) {
+  
+        var option = RestOptions(route: End.users.route, method: .DELETE)
+        
+        // user with id
+        option.URLParams = [id]
+        
+        option.expectedStatusCodes = [204]
+        
+        Rest.fetchData(with: option) { (result) in
+            
+            switch(result) {
+            case .success(_):
+                print("user successfully deleted")
+                callback(true, nil)
+            case .failure(let error):
+                callback(false, error.localizedDescription)
+            }
+        }
+    }
 }
  
 // login post success

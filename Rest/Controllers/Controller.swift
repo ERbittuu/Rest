@@ -136,8 +136,25 @@ class Controller: UIViewController {
         alert.addAction(UIAlertAction(title: "Close", style: .cancel , handler:{ (UIAlertAction)in }))
         self.present(alert, animated: true, completion: { })
     }
-//
-//    @IBAction func cancelLastCall(_ sender: UIButton) {
+    
+    @IBAction func updateUserClicked(_ sender: UIButton) {
+        Request.updateUser(info: (name: "morpheus", job: "zion resident" ), id: 2) { (success, error) in
+            if !success {
+                print("error")
+            }
+        }
+    }
+    
+    @IBAction func deleteUserClicked(_ sender: UIButton) {
+        
+        Request.deleteUser(id: 2) { (success, error) in
+            if !success {
+                print("error")
+            }
+        }
+    }
+    
+    //    @IBAction func cancelLastCall(_ sender: UIButton) {
 //
 //        cs?.cancel()
 //    }
