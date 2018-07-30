@@ -16,6 +16,11 @@ enum Environment: String {
     var name: String {
        return self.rawValue
     }
+
+    var info: String {
+        let infoDictionary = Bundle.main.infoDictionary!
+        return "\(name): [\(Bundle.main.bundleIdentifier!) v\(infoDictionary["CFBundleShortVersionString"] ?? "0")(\(infoDictionary["CFBundleVersion"] ?? "0"))] Running....\n"
+    }
     
     static var version =  "" // "v5/" //"v4/" // "v3/" // "v2/" // "v1" // ""
         

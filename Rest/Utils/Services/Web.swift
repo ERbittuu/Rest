@@ -238,4 +238,30 @@ class Web {
             }
         }
     }
+    
+    static func delayCall(callback: @escaping (_ success: Bool, _ error: String?) -> ()) ->  CancellationSource {
+        
+        let cancellationSource = CancellationSource()
+        
+        var option = RestOptions(route: End.users.route, method: .GET)
+        
+        // user with id
+        option.URLParams = [2]
+        option.parameter = ["delay": 10]
+        
+        option.expectedStatusCodes = [200, 404]
+        
+        Rest.fetchData(with: option, andCancelToken: cancellationSource.token) { (result) in
+            
+            switch(result) {
+            case .success(_):
+                print("user successfully deleted")
+                callback(true, nil)
+            case .failure(let error):
+                callback(false, error.localizedDescription)
+            }
+        }
+        
+        return cancellationSource
+    }
 }

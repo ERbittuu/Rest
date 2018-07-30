@@ -10,32 +10,14 @@ import UIKit
 
 class Controller: UIViewController {
 
-//    @IBOutlet weak var cancel: UIButton!
     
     @IBOutlet weak var selection: UISegmentedControl!
     var allService = [Rest]()
     
-//    var cs : CancellationSource?
-    
     override func viewDidLoad() {
+        cancel.isHidden = true
         super.viewDidLoad()
     }
-    
-    private func cancelVisibilityChange() {
-//        cancel.isHidden = allService.isEmpty
-    }
-    
-//    @IBAction func getCall(_ sender: UIButton) {
-//        cancel.isHidden = false
-//        self.cs = WebService.shared.simpleGET{ data in
-//            self.cancel.isHidden = true
-//        }
-//
-//        self.cs?.token.register {
-//            print("I have cancelled request stop unwanted task here")
-//        }
-//    }
-//
     
     func login(success: Bool) {
         Web.login(email: "peter@klaven", password: success ? "cityslicka" : "") { (token, error) in
@@ -152,8 +134,29 @@ class Controller: UIViewController {
         }
     }
     
-    //    @IBAction func cancelLastCall(_ sender: UIButton) {
-//
-//        cs?.cancel()
-//    }
+    @IBOutlet weak var cancel: UIButton!
+    var cs : CancellationSource?
+    
+    @IBAction func delayClicked(_ sender: UIButton) {
+        cancel.isHidden = false
+        
+        cs = Web.delayCall { (success, errorMsg) in
+            self.cancel.isHidden = true
+            if !success {
+                print("error")
+            }
+        }
+        
+        cs?.token.register {
+            print("request stoped")
+        }
+        
+        cs?.token.register {
+            print("request stoped second handler")
+        }
+    }
+    
+    @IBAction func cancelLastCall(_ sender: UIButton) {
+        cs?.cancel()
+    }
 }

@@ -147,9 +147,35 @@
                             </label>
                             <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="zpZ-qE-LQa">
                                 <rect key="frame" x="40" y="557" width="295" height="100"/>
+                                <subviews>
+                                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="3yq-Ty-39W">
+                                        <rect key="frame" x="32" y="35" width="66" height="30"/>
+                                        <state key="normal" title="Delay call">
+                                            <color key="titleColor" name="controlLightHighlightColor" catalog="System" colorSpace="catalog"/>
+                                        </state>
+                                        <connections>
+                                            <action selector="delayClicked:" destination="Sbj-0h-k8C" eventType="touchUpInside" id="mNy-lR-Leq"/>
+                                        </connections>
+                                    </button>
+                                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="C3e-ns-2Rj">
+                                        <rect key="frame" x="174" y="35" width="89" height="30"/>
+                                        <state key="normal" title="Stop request">
+                                            <color key="titleColor" name="controlLightHighlightColor" catalog="System" colorSpace="catalog"/>
+                                        </state>
+                                        <connections>
+                                            <action selector="cancelLastCall:" destination="Sbj-0h-k8C" eventType="touchUpInside" id="N4I-T1-byq"/>
+                                        </connections>
+                                    </button>
+                                </subviews>
                                 <color key="backgroundColor" red="0.072636418978759276" green="0.766860267179305" blue="0.99247711900000002" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                 <constraints>
+                                    <constraint firstItem="C3e-ns-2Rj" firstAttribute="centerY" secondItem="3yq-Ty-39W" secondAttribute="centerY" id="35e-H5-s9A"/>
+                                    <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="3yq-Ty-39W" secondAttribute="trailing" constant="20" symbolic="YES" id="6t8-5o-ry5"/>
+                                    <constraint firstItem="3yq-Ty-39W" firstAttribute="leading" secondItem="zpZ-qE-LQa" secondAttribute="leading" constant="32" id="Fji-fj-8Is"/>
+                                    <constraint firstAttribute="trailing" secondItem="C3e-ns-2Rj" secondAttribute="trailing" constant="32" id="Xxj-7h-Kcy"/>
+                                    <constraint firstItem="3yq-Ty-39W" firstAttribute="centerY" secondItem="zpZ-qE-LQa" secondAttribute="centerY" id="oPU-YX-llf"/>
                                     <constraint firstAttribute="height" constant="100" id="uYC-me-zcR"/>
+                                    <constraint firstItem="C3e-ns-2Rj" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="zpZ-qE-LQa" secondAttribute="leading" constant="20" symbolic="YES" id="yH5-I2-ss5"/>
                                 </constraints>
                             </view>
                         </subviews>
@@ -182,6 +208,7 @@
                     </view>
                     <navigationItem key="navigationItem" title="Example" prompt="Rest" id="qZa-dC-pfw"/>
                     <connections>
+                        <outlet property="cancel" destination="C3e-ns-2Rj" id="6tV-2U-KSh"/>
                         <outlet property="selection" destination="bnb-Wa-ew9" id="Srf-B7-WDY"/>
                     </connections>
                 </viewController>
