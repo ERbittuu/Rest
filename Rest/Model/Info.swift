@@ -1,5 +1,5 @@
 //
-//  User.swift
+//  Info.swift
 //  Rest
 //
 //  Created by Utsav Patel on 7/30/18.
@@ -8,9 +8,10 @@
 
 import Foundation
 
-struct User: Decodable {
+struct Info: Decodable {
     let id: Int
-    let first_name: String
-    let last_name: String
-    let avatar: String
+    let name: String
+    let year: Int
+    let color: String
+    let pantone_value: String
 }

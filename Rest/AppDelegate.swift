@@ -15,8 +15,13 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     static let main = UIStoryboard.init(name: "Main", bundle: nil)
     
+    static var configuration = Configuration()
+    
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
+        
+        print(AppDelegate.configuration.environment.info)
+        Web.defaultSettings()
         return true
     }
 
