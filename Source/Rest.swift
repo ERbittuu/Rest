@@ -144,7 +144,7 @@ open class Rest {
 }
 
 /// Errors related to the networking for the `Rest`
-public enum RestError: Error {
+public enum RestError: Error, LocalizedError{
     /// Indicates the server responded with an unexpected status code.
     /// - parameter Int: The status code the server respodned with.
     /// - parameter Data?: The raw returned data from the server
@@ -166,6 +166,24 @@ public enum RestError: Error {
     
     /// Error Network not available
     case networkError(message: String)
+    
+    public var errorDescription: String? {
+        switch self {
+            case .unexpectedStatusCode(let code, _):
+                return "Rest error: unexpectedStatusCode -> \(code)"
+            case .badResponse:
+                return "Rest error: badResponse data"
+            case .noResponse:
+                return "Rest error: noResponse"
+            case .invalidRequest(let msg):
+                return "Rest error: invalidRequest -> \(msg)"
+            case .networkError(let msg):
+                return "Rest error: networkError -> \(msg)"
+            case .malformedResponse(_):
+                return "Rest error: malformedResponse data"
+        }
+        
+    }
 }
 
 /// Options for `Rest` calls. Allows you to set an expected HTTP status code, HTTP Headers, or to modify the request timeout.

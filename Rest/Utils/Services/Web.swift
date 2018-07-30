@@ -9,33 +9,13 @@
 
 import Foundation
 
-public enum End: String {
-    case login
-    case register
-    case data
-    case users
+class Web {
     
-    var route: String {
-        return "/\(self.rawValue)"
+    static func defaultSettings() {
+        Rest.default.origin = AppDelegate.configuration.environment.rootURL
+        Rest.default.showLogs = true
+        Rest.default.activityIndicatorDisplay = true
     }
-}
-
-struct User: Decodable {
-    let id: Int
-    let first_name: String
-    let last_name: String
-    let avatar: String
-}
-
-struct Info: Decodable {
-    let id: Int
-    let name: String
-    let year: Int
-    let color: String
-    let pantone_value: String
-}
-
-class Request {
     
     static func login(email: String, password: String, callback: @escaping (_ token: String?, _ error: String?) -> ()) {
         
@@ -99,34 +79,7 @@ class Request {
             }
         }
     }
-    
-//    {
-//    "page": 2,
-//    "per_page": 3,
-//    "total": 12,
-//    "total_pages": 4,
-//    "data": [
-//    {
-//    "id": 4,
-//    "first_name": "Eve",
-//    "last_name": "Holt",
-//    "avatar": "https://s3.amazonaws.com/uifaces/faces/twitter/marcoramires/128.jpg"
-//    },
-//    {
-//    "id": 5,
-//    "first_name": "Charles",
-//    "last_name": "Morris",
-//    "avatar": "https://s3.amazonaws.com/uifaces/faces/twitter/stephenmoon/128.jpg"
-//    },
-//    {
-//    "id": 6,
-//    "first_name": "Tracey",
-//    "last_name": "Ramos",
-//    "avatar": "https://s3.amazonaws.com/uifaces/faces/twitter/bigmancho/128.jpg"
-//    }
-//    ]
-//    }
-//
+
     static func users(id: Int, isPageId: Bool, callback: @escaping (_ users: [User], _ error: String?) -> ()) {
         
         struct UserListResponse: Decodable {
@@ -286,25 +239,3 @@ class Request {
         }
     }
 }
- 
-// login post success
-// login post un success
-//
-// register success
-// register un success
-//
-// delay response by some time
-//
-// data list
-// data by id found
-// data by id not found
-//
-// users list
-// user by id found
-// user by id not found
-//
-// user create
-// user update
-// user delete
-//
-// */

@@ -19,8 +19,6 @@ class Controller: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        Rest.default.origin = "https://reqres.in/api"
-        Rest.default.showLogs = true
     }
     
     private func cancelVisibilityChange() {
@@ -40,7 +38,7 @@ class Controller: UIViewController {
 //
     
     func login(success: Bool) {
-        Request.login(email: "peter@klaven", password: success ? "cityslicka" : "") { (token, error) in
+        Web.login(email: "peter@klaven", password: success ? "cityslicka" : "") { (token, error) in
             guard let loginToken = token else {
                 print(error ?? "Some error")
                 return
@@ -50,7 +48,7 @@ class Controller: UIViewController {
     }
     
     func register(success: Bool) {
-        Request.register(email: "peter@klaven", password: success ? "cityslicka" : "") { (token, error) in
+        Web.register(email: "peter@klaven", password: success ? "cityslicka" : "") { (token, error) in
             guard let loginToken = token else {
                 print(error ?? "Some error")
                 return
@@ -62,7 +60,7 @@ class Controller: UIViewController {
     func userList(success: Bool, islist: Bool, forInfo: Bool = false) {
         
         if forInfo {
-            Request.info(id: success ? 2 : 2000, isPageId: islist) { (users, error) in
+            Web.info(id: success ? 2 : 2000, isPageId: islist) { (users, error) in
                 if let _error = error {
                     print(_error)
                     return
@@ -70,7 +68,7 @@ class Controller: UIViewController {
                 print(users)
             }
         } else {
-            Request.users(id: success ? 2 : 2000, isPageId: islist) { (users, error) in
+            Web.users(id: success ? 2 : 2000, isPageId: islist) { (users, error) in
                 if let _error = error {
                     print(_error)
                     return
@@ -138,7 +136,7 @@ class Controller: UIViewController {
     }
     
     @IBAction func updateUserClicked(_ sender: UIButton) {
-        Request.updateUser(info: (name: "morpheus", job: "zion resident" ), id: 2) { (success, error) in
+        Web.updateUser(info: (name: "morpheus", job: "zion resident" ), id: 2) { (success, error) in
             if !success {
                 print("error")
             }
@@ -147,7 +145,7 @@ class Controller: UIViewController {
     
     @IBAction func deleteUserClicked(_ sender: UIButton) {
         
-        Request.deleteUser(id: 2) { (success, error) in
+        Web.deleteUser(id: 2) { (success, error) in
             if !success {
                 print("error")
             }
