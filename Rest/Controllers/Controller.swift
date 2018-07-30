@@ -60,12 +60,23 @@ class Controller: UIViewController {
     }
     
     func userList(success: Bool, islist: Bool, forInfo: Bool = false) {
-        Request.users(id: success ? 2 : 2000, isPageId: islist) { (users, error) in
-            if let _error = error {
-                print(_error)
-                return
+        
+        if forInfo {
+            Request.info(id: success ? 2 : 2000, isPageId: islist) { (users, error) in
+                if let _error = error {
+                    print(_error)
+                    return
+                }
+                print(users)
             }
-            print(users)
+        } else {
+            Request.users(id: success ? 2 : 2000, isPageId: islist) { (users, error) in
+                if let _error = error {
+                    print(_error)
+                    return
+                }
+                print(users)
+            }
         }
     }
     
@@ -104,21 +115,21 @@ class Controller: UIViewController {
     @IBAction func getList(_ sender: UIButton) {
         
         let forInfo = selection.selectedSegmentIndex == 1
-        let alert = UIAlertController(title: "User List example", message: "", preferredStyle: .actionSheet)
+        let alert = UIAlertController(title: "\(forInfo ? "Info" : "User") List example", message: "", preferredStyle: .actionSheet)
         
-        alert.addAction(UIAlertAction(title: "Single user response", style: .default , handler:{ (UIAlertAction)in
+        alert.addAction(UIAlertAction(title: "Single \(forInfo ? "Info" : "User") response", style: .default , handler:{ (UIAlertAction)in
             self.userList(success: true, islist: false, forInfo: forInfo)
         }))
         
-        alert.addAction(UIAlertAction(title: "Single user error response", style: .default , handler:{ (UIAlertAction)in
+        alert.addAction(UIAlertAction(title: "Single \(forInfo ? "Info" : "User") error response", style: .default , handler:{ (UIAlertAction)in
             self.userList(success: false, islist: false, forInfo: forInfo)
         }))
         
-        alert.addAction(UIAlertAction(title: "User list response", style: .default , handler:{ (UIAlertAction)in
+        alert.addAction(UIAlertAction(title: "\(forInfo ? "Info" : "User") list response", style: .default , handler:{ (UIAlertAction)in
             self.userList(success: true, islist: true, forInfo: forInfo)
         }))
         
-        alert.addAction(UIAlertAction(title: "User list not found response", style: .default , handler:{ (UIAlertAction)in
+        alert.addAction(UIAlertAction(title: "\(forInfo ? "Info" : "User") list not found response", style: .default , handler:{ (UIAlertAction)in
             self.userList(success: false, islist: true, forInfo: forInfo)
         }))
         

@@ -130,11 +130,15 @@ class Request {
     static func users(id: Int, isPageId: Bool, callback: @escaping (_ users: [User], _ error: String?) -> ()) {
         
         struct UserListResponse: Decodable {
-            let page: Int? = nil
-            let per_page: Int? = nil
-            let total: Int? = nil
-            let total_pages: Int? = nil
+            let page: Int
+            let per_page: Int
+            let total: Int
+            let total_pages: Int
             let data: [User]
+        }
+        
+        struct UserResponse: Decodable {
+            let data: User
         }
         
         var option = RestOptions(route: End.users.route, method: .GET)
@@ -153,26 +157,39 @@ class Request {
             
             switch(result) {
             case .success(let data):
-                // decode response with Decodable
-                guard let userListResponse = try? JSONDecoder().decode(UserListResponse.self, from: data) else {
-                    callback([], "Error: Couldn't decode data into UserListResponse")
-                    return
+                if isPageId {
+                    // decode response with Decodable
+                    guard let userListResponse = try? JSONDecoder().decode(UserListResponse.self, from: data) else {
+                        callback([], "Error: Couldn't decode data into UserListResponse")
+                        return
+                    }
+                    callback(userListResponse.data, nil)
+                } else {
+                    // decode response with Decodable
+                    guard let userResponse = try? JSONDecoder().decode(UserResponse.self, from: data) else {
+                        callback([], "Error: Couldn't decode data into User")
+                        return
+                    }
+                    callback([userResponse.data], nil)
                 }
-                callback(userListResponse.data, nil)
             case .failure(let error):
                 callback([], error.localizedDescription)
             }
         }
     }
     
-    static func data(id: Int, isPageId: Bool, callback: @escaping (_ users: [Info], _ error: String?) -> ()) {
+    static func info(id: Int, isPageId: Bool, callback: @escaping (_ users: [Info], _ error: String?) -> ()) {
         
         struct InfoListResponse: Decodable {
-            let page: Int? = nil
-            let per_page: Int? = nil
-            let total: Int? = nil
-            let total_pages: Int? = nil
+            let page: Int
+            let per_page: Int
+            let total: Int
+            let total_pages: Int
             let data: [Info]
+        }
+        
+        struct InfoResponse: Decodable {
+            let data: Info
         }
         
         var option = RestOptions(route: End.data.route, method: .GET)
@@ -191,12 +208,22 @@ class Request {
             
             switch(result) {
             case .success(let data):
-                // decode response with Decodable
-                guard let userListResponse = try? JSONDecoder().decode(InfoListResponse.self, from: data) else {
-                    callback([], "Error: Couldn't decode data into InfoListResponse")
-                    return
+                if isPageId {
+                    // decode response with Decodable
+                    guard let userListResponse = try? JSONDecoder().decode(InfoListResponse.self, from: data) else {
+                        callback([], "Error: Couldn't decode data into InfoListResponse")
+                        return
+                    }
+                    callback(userListResponse.data, nil)
+                } else {
+                    // decode response with Decodable
+                    guard let infoResponse = try? JSONDecoder().decode(InfoResponse.self, from: data) else {
+                        callback([], "Error: Couldn't decode data into Info")
+                        return
+                    }
+                    callback([infoResponse.data], nil)
                 }
-                callback(userListResponse.data, nil)
+                
             case .failure(let error):
                 callback([], error.localizedDescription)
             }
