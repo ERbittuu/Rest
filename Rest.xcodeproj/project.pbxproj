@@ -376,7 +376,7 @@
 				INFOPLIST_FILE = Rest/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = "com.erbittuu.Rest-Dev";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.erbittuu.Rest-Stage";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_VERSION = 4.0;
@@ -464,7 +464,7 @@
 				INFOPLIST_FILE = Rest/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = "com.erbittuu.Rest-Dev";
+				PRODUCT_BUNDLE_IDENTIFIER = com.erbittuu.Rest;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_VERSION = 4.0;
@@ -596,7 +596,7 @@
 				2D0D7111210EED55003776CD /* Prod */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Dev;
+			defaultConfigurationName = Prod;
 		};
 		2D45F8732077785300A24B33 /* Build configuration list for PBXProject "Rest" */ = {
 			isa = XCConfigurationList;
@@ -606,7 +606,7 @@
 				2D0D710F210EED55003776CD /* Prod */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Dev;
+			defaultConfigurationName = Prod;
 		};
 		2D45F88A2077785300A24B33 /* Build configuration list for PBXNativeTarget "Rest" */ = {
 			isa = XCConfigurationList;
@@ -616,7 +616,7 @@
 				2D0D7110210EED55003776CD /* Prod */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Dev;
+			defaultConfigurationName = Prod;
 		};
 /* End XCConfigurationList section */
 	};

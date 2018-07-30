@@ -18,12 +18,7 @@ enum Environment: String {
     }
     
     static var version =  "" // "v5/" //"v4/" // "v3/" // "v2/" // "v1" // ""
-    
-    func c() {
-        Rest.default.origin = "https://reqres.in/api"
-        Rest.default.showLogs = true
-    }
-    
+        
     var rootURL: String {
         return rootOrigin + Environment.version
     }
