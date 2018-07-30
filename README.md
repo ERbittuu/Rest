@@ -1,7 +1,11 @@
 # Rest
 An HTTP networking library for iOS in Swift 4
 
+## Setup  
+Drag Rest.swift file to your XCode project and set default setting as per your requirement. 
+
 ## Features 
+
     - [x] Support all basic service type  (GET, POST, PUT, PATCH, DELETE)
     - [x] Multipart file Upload support 
     - [x] Request Cancel support 
@@ -11,14 +15,155 @@ An HTTP networking library for iOS in Swift 4
     - [x] You can set ypu time out for webservice
     - [x] Status Codes acceptance for single or all request.
     - [x] Network Activity Indicator support
-    - [ ] Download file support 
+    - [ ] File Download support 
+
+
+## RestError 
+`RestError` is a custom error while creating request, or handle the response, you can print it using enabling logs in rest.
+
+## Rest `default` setting option 
+
+1. showLogs(Bool): Rest will print logs for you or not, the default is true  
+2. origin(Bool): Webservice origin for all request. (will remove in next version)
+3. timeout(Double): Webservice timeout in second.
+4. index(Int): Webservice index use for debugging.
+5. activityIndicatorDisplay(Bool): Network Activity Indicator display default is true.
+6. statusCodes([Int]): The expected status call for the call, Default is from any[].
+7. cachePolicy: The NSURLRequest CachePolicy for Rest request
+
+## RestOption for setting different option for web service 
+
+1. route: String -> The route for the request
+2. requestType: HTTPMethod -> The requestType for the request
+3. expectedStatusCodes: [Int] -> The requestType for the request
+4. requestTimeoutSeconds -> The amount of time in `seconds` until the request times out, Default is from Rest default setting.
+5. parameter : [String: Any] -> An optional set of params to send, What params you want to add in the request. Rest will do things right whether a method is GET or POST.
+6. URLParams : [Any] -> An optional set of URLParams to send: like user/4/post/10, What URLParams you want to add in the request. Rest will do things right whether a method is GET or POST.
+7. files: [File] -> Add files to Rest, POST only
+8. httpHeaders: [String: String] -> An optional set of HTTP Headers to send with the call.
+9. HTTPBodyRaw: (body: String, isJSON: Bool) -> An optional set of HTTP Raw body to send with the call, is JSON or not: will set "Content-Type" of HTTP request to "application/json" or "text/plain;charset=UTF-8"
+10. flow: Flow -> The request flow will be sync or aysnc, default to aysnc
+
 
 ## Example
 
 ```swift
-    
-     print("Hello")
+    // Default settings 
+    Rest.default.origin = AppDelegate.configuration.environment.rootURL
+    Rest.default.showLogs = true
+    Rest.default.activityIndicatorDisplay = true
 
+    // GET request 
+     
+    var option = RestOptions(route: End.users.route, method: .GET)
+    option.parameter = ["page": id]
+    option.expectedStatusCodes = [200, 404]
+    
+    Rest.fetchData(with: option) { (result) in
+        
+        switch(result) {
+            case .success(_):
+                print("Success")
+            case .failure(_):
+                print("error")
+        }
+    }
+
+    // POST request 
+     
+    var option = RestOptions(route: End.login.route, method: .POST)
+    option.parameter = [ "email": email, "password": password]
+    option.expectedStatusCodes = [400, 200]
+        
+    Rest.fetchData(with: option) { (result) in
+         switch(result) {
+            case .success(_):
+                print("Success")
+            case .failure(_):
+                print("error")
+        }
+    }
+
+    // PUT request 
+     
+    var option = RestOptions(route: End.users.route, method: .PUT)        
+    // user with id
+    option.URLParams = [id]
+    
+    // update data
+    option.parameter = ["name": info.name, "job": info.job]
+    
+    option.expectedStatusCodes = [200, 404]
+    
+    Rest.fetchData(with: option) { (result) in
+        switch(result) {
+            case .success(_):
+                print("Success")
+            case .failure(_):
+                print("error")
+        }
+    }
+
+    // DELETE request 
+     
+   var option = RestOptions(route: End.users.route, method: .DELETE)        
+    // user with id
+    option.URLParams = [id]
+    option.expectedStatusCodes = [204]
+    
+    Rest.fetchData(with: option) { (result) in
+        switch(result) {
+            case .success(_):
+                print("Success")
+            case .failure(_):
+                print("error")
+        }
+    }
+
+
+    // Cancel request Test 
+
+    // Create `CancellationSource` for handle when request is Cancel 
+    var cs: CancellationSource = delayCall { (success, errorMsg) in
+            if !success {
+                print("error")
+            }
+        }
+
+    // This call when request cancelld   
+    cs?.token.register {
+        print("request stoped")        
+    }
+    
+    // For Cancel web request 
+    cs?.cancel()
+ 
+     
+     // Web function
+     func delayCall(callback: @escaping (_ success: Bool, _ error: String?) -> ()) ->  CancellationSource {
+        
+        let cancellationSource = CancellationSource()
+        var option = RestOptions(route: End.users.route, method: .GET)
+        
+        // user with id
+        option.URLParams = [2]
+        option.parameter = ["delay": 10]
+        
+        option.expectedStatusCodes = [200, 404]
+        
+        Rest.fetchData(with: option, andCancelToken: cancellationSource.token) { (result) in
+            
+            switch(result) {
+            case .success(_):
+                print("user successfully deleted")
+                callback(true, nil)
+            case .failure(let error):
+                callback(false, error.localizedDescription)
+            }
+        }
+        
+        return cancellationSource
+    }
 ```
 
 # Contributing to Rest
