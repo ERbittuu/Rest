@@ -2,57 +2,22 @@
 An HTTP networking library for iOS in Swift 4
 
 ## Features 
-    1. Support all basic service type  
-    2. Multipart file support 
-    3. Request Cancel support 
-    4. Inbuilt log support 
-    5. Network Activity Indicator support
-
+    - [x] Support all basic service type  (GET, POST, PUT, PATCh, DELETE)
+    - [x] Multipart file Upload support 
+    - [x] Request Cancel support 
+    - [x] Inbuilt network logs support 
+    - [x] Ios Network Activity Indicator support
+    - [x] Set parameter to request, url params and header to your request 
+    - [x] You can set ypu time out for webservice
+    - [x] Status Codes acceptance for single or all request.
+    - [x] Download file support 
+    - [x] Network Activity Indicator support
 
 ## Example
 
-
 ```swift
     
-     var cs : CancellationSource?
-    
-    // request from server 
-        
-    self.cs = WebService.shared.simpleGET{ data in
-            // Do something with data
-            }
-        
-    // Handler called when service cancelled manually
-        self.cs?.token.register {
-            print("I have cancelled request stop unwanted task here")
-        }
-    }
-
-    // Request cancelled by user 
-        cs?.cancel()
-
-    class WebService {
-        
-        private init() { }
-        static var shared : WebService {
-            let service = WebService()
-            Rest.default.showLogs = true
-            return service
-        }
-        
-        func simpleGET(with completion: @escaping ((_ data : Data?) -> ())) -> CancellationSource {
-            // Create cancellable token
-            let source = CancellationSource()
-            //    GET     /posts
-            Rest.prepare(HTTPMethod: .GET, url: Configuration.post.posts.url)
-                .call(cancelToken: source.token) { (data, responce, error) in
-                    // send completion data
-                    //completion(data)
-            }
-            return source
-        }       
-    }
-}
+     print("Hello")
 
 ```
 
