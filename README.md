@@ -24,12 +24,20 @@ Drag Rest.swift file to your XCode project and set default setting as per your r
 ## Rest `default` setting option 
 
 1. showLogs(Bool): Rest will print logs for you or not, the default is true  
-2. origin(Bool): Webservice origin for all request. (will remove in next version)
-3. timeout(Double): Webservice timeout in second.
-4. index(Int): Webservice index use for debugging.
-5. activityIndicatorDisplay(Bool): Network Activity Indicator display default is true.
-6. statusCodes([Int]): The expected status call for the call, Default is from any[].
-7. cachePolicy: The NSURLRequest CachePolicy for Rest request
+2. timeout(Double): Webservice timeout in second.
+3. index(Int): Webservice index use for debugging.
+4. activityIndicatorDisplay(Bool): Network Activity Indicator display default is true.
+5. statusCodes([Int]): The expected status call for the call, Default is from any[].
+6. cachePolicy: The NSURLRequest CachePolicy for Rest request
+
+## RestRequired *Protocol*
+If you want to user Rest then must extend RestRequired `protocol` in your service wrapper file.
+
+Two things you need to set... 
+1. Domain url as origin(`String`)
+2. End points enums
+
+`Then just use Your class name and call()... your services`
 
 ## RestOption for setting different option for web service 
 
@@ -48,8 +56,10 @@ Drag Rest.swift file to your XCode project and set default setting as per your r
 ## Example
 
 ```swift
+
+    class TestAPI: RestRequired { }
+    
     // Default settings 
-    Rest.default.origin = AppDelegate.configuration.environment.rootURL
     Rest.default.showLogs = true
     Rest.default.activityIndicatorDisplay = true
 
@@ -59,7 +69,7 @@ Drag Rest.swift file to your XCode project and set default setting as per your r
     option.parameter = ["page": id]
     option.expectedStatusCodes = [200, 404]
     
-    Rest.fetchData(with: option) { (result) in
+    TestAPI.call(with: option) { (result) in
         
         switch(result) {
             case .success(_):
@@ -75,7 +85,7 @@ Drag Rest.swift file to your XCode project and set default setting as per your r
     option.parameter = [ "email": email, "password": password]
     option.expectedStatusCodes = [400, 200]
         
-    Rest.fetchData(with: option) { (result) in
+    TestAPI.call(with: option) { (result) in
          switch(result) {
             case .success(_):
                 print("Success")
@@ -95,7 +105,7 @@ Drag Rest.swift file to your XCode project and set default setting as per your r
     
     option.expectedStatusCodes = [200, 404]
     
-    Rest.fetchData(with: option) { (result) in
+    TestAPI.call(with: option) { (result) in
         switch(result) {
             case .success(_):
                 print("Success")
@@ -111,7 +121,7 @@ Drag Rest.swift file to your XCode project and set default setting as per your r
     option.URLParams = [id]
     option.expectedStatusCodes = [204]
     
-    Rest.fetchData(with: option) { (result) in
+    TestAPI.call(with: option) { (result) in
         switch(result) {
             case .success(_):
                 print("Success")
@@ -151,7 +161,7 @@ Drag Rest.swift file to your XCode project and set default setting as per your r
         
         option.expectedStatusCodes = [200, 404]
         
-        Rest.fetchData(with: option, andCancelToken: cancellationSource.token) { (result) in
+        TestAPI.call(with: option, andCancelToken: cancellationSource.token) { (result) in
             
             switch(result) {
             case .success(_):
