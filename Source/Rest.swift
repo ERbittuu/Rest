@@ -727,7 +727,7 @@ extension RestRequired {
 ///     
 ///     - parameter option:     `RestOptions` object as per your requirement 
 ///     - parameter token:      `CancellationToken` if you want to cancel request after some time 
-///     - returns: a Rest `Result` of your service
+///     - parameter callback    `Result` of your service
     static func call(with option: RestOptions,
                      andCancelToken token: CancellationToken? = nil,
                      callback: @escaping (Result<Data>) -> ()) {
