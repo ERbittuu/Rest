@@ -20,7 +20,7 @@ class Controller: UIViewController {
     }
     
     func login(success: Bool) {
-        Web.login(email: "peter@klaven", password: success ? "cityslicka" : "") { (token, error) in
+        TestAPI.login(email: "peter@klaven", password: success ? "cityslicka" : "") { (token, error) in
             guard let loginToken = token else {
                 print(error ?? "Some error")
                 return
@@ -30,7 +30,7 @@ class Controller: UIViewController {
     }
     
     func register(success: Bool) {
-        Web.register(email: "peter@klaven", password: success ? "cityslicka" : "") { (token, error) in
+        TestAPI.register(email: "peter@klaven", password: success ? "cityslicka" : "") { (token, error) in
             guard let loginToken = token else {
                 print(error ?? "Some error")
                 return
@@ -42,7 +42,7 @@ class Controller: UIViewController {
     func userList(success: Bool, islist: Bool, forInfo: Bool = false) {
         
         if forInfo {
-            Web.info(id: success ? 2 : 2000, isPageId: islist) { (users, error) in
+            TestAPI.info(id: success ? 2 : 2000, isPageId: islist) { (users, error) in
                 if let _error = error {
                     print(_error)
                     return
@@ -50,7 +50,7 @@ class Controller: UIViewController {
                 print(users)
             }
         } else {
-            Web.users(id: success ? 2 : 2000, isPageId: islist) { (users, error) in
+            TestAPI.users(id: success ? 2 : 2000, isPageId: islist) { (users, error) in
                 if let _error = error {
                     print(_error)
                     return
@@ -118,7 +118,7 @@ class Controller: UIViewController {
     }
     
     @IBAction func updateUserClicked(_ sender: UIButton) {
-        Web.updateUser(info: (name: "morpheus", job: "zion resident" ), id: 2) { (success, error) in
+        TestAPI.updateUser(info: (name: "morpheus", job: "zion resident" ), id: 2) { (success, error) in
             if !success {
                 print("error")
             }
@@ -127,7 +127,7 @@ class Controller: UIViewController {
     
     @IBAction func deleteUserClicked(_ sender: UIButton) {
         
-        Web.deleteUser(id: 2) { (success, error) in
+        TestAPI.deleteUser(id: 2) { (success, error) in
             if !success {
                 print("error")
             }
@@ -140,7 +140,7 @@ class Controller: UIViewController {
     @IBAction func delayClicked(_ sender: UIButton) {
         cancel.isHidden = false
         
-        cs = Web.delayCall { (success, errorMsg) in
+        cs = TestAPI.delayCall { (success, errorMsg) in
             self.cancel.isHidden = true
             if !success {
                 print("error")

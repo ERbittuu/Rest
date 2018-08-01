@@ -20,15 +20,3 @@ struct Configuration {
         return Environment.Production
     }()
 }
-
-// End Points
-public enum End: String {
-    case login
-    case register
-    case data
-    case users
-    
-    var route: String {
-        return "/\(self.rawValue)"
-    }
-}

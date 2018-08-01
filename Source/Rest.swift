@@ -76,8 +76,6 @@ open class Rest {
         /// if set to true, Rest will log all information in a NSURLSession lifecycle
         public static var showLogs = true
         
-        public static var origin: String?
-        
         /// default timeout for all services
         public static var timeout = 60.0
         
@@ -110,17 +108,11 @@ open class Rest {
         }
     }
     
-    open static func fetchData(with option: RestOptions,
+    fileprivate static func fetchData(with option: RestOptions,
                                  andCancelToken token: CancellationToken? = nil,
                                  callback: @escaping (Result<Data>) -> ()) {
-        
-        guard var url = Rest.default.origin else {
-            doOnMain { callback(.failure(RestError.invalidRequest(message: "Please set origin in Rest default setting"))) }
-            return
-        }
-        
-        // set route 
-        url.append(option.route)
+        // set full origin with route
+        let url = option.origin!
         
         if !Network.isAvailable() {
             doOnMain { callback(.failure(RestError.networkError(message: "Internet not available"))) }
@@ -188,6 +180,8 @@ public enum RestError: Error, LocalizedError{
 
 /// Options for `Rest` calls. Allows you to set an expected HTTP status code, HTTP Headers, or to modify the request timeout.
 public struct RestOptions {
+    
+    fileprivate var origin: String!
     
     /// The route for the request
     public var route: String
@@ -730,5 +724,36 @@ extension CancellationSource {
             }
             return handler
         }
+    }
+}
+
+/// RestRequired protocol for services wraper
+public protocol RestRequired {
+    static var origin: String { get set }
+    associatedtype End: RawRepresentable
+}
+
+// default implementation
+extension RestRequired {
+    
+    static func call(with option: RestOptions,
+                     andCancelToken token: CancellationToken? = nil,
+                     callback: @escaping (Result<Data>) -> ()) {
+        var _option = option
+        
+        guard origin.count > 0 else {
+            doOnMain { callback(.failure(RestError.invalidRequest(message: "Please set origin in Rest default setting"))) }
+            return
+        }
+        
+        // copy origin 
+        var _origin = origin
+        
+        // append endpoint
+        _origin.append(option.route)
+        
+        _option.origin = _origin
+        
+        Rest.fetchData(with: _option, andCancelToken: token, callback: callback)
     }
 }

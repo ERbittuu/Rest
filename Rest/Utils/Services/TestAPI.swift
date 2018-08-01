@@ -1,6 +1,6 @@
 
 //
-//  Web.swift
+//  TestAPI.swift
 //  Rest
 //
 //  Created by Utsav Patel on 4/6/18.
@@ -9,10 +9,23 @@
 
 import Foundation
 
-class Web {
+class TestAPI: RestRequired {
+    
+    // End Points
+    enum End: String {
+        case login
+        case register
+        case data
+        case users
+        
+        var route: String {
+            return "/\(self.rawValue)"
+        }
+    }
+    
+    static var origin: String = AppDelegate.configuration.environment.rootURL
     
     static func defaultSettings() {
-        Rest.default.origin = AppDelegate.configuration.environment.rootURL
         Rest.default.showLogs = true
         Rest.default.activityIndicatorDisplay = true
     }
@@ -28,23 +41,23 @@ class Web {
         option.parameter = [ "email": email, "password": password]
         option.expectedStatusCodes = [400, 200]
         
-        Rest.fetchData(with: option) { (result) in
-
+        TestAPI.call(with: option) { (result) in
+            
             switch(result) {
-                case .success(let data):
-                    
-                    // decode response with Decodable
-                    guard let loginResponse = try? JSONDecoder().decode(LoginResponse.self, from: data) else {
-                        callback(nil, "Error: Couldn't decode data into LoginResponse")
-                        return
-                    }
-                    if let token = loginResponse.token {
-                        callback(token, nil)
-                    }else {
-                        callback(nil, loginResponse.error!)
-                    }
-                case .failure(let error):
-                    callback(nil, error.localizedDescription)
+            case .success(let data):
+                
+                // decode response with Decodable
+                guard let loginResponse = try? JSONDecoder().decode(LoginResponse.self, from: data) else {
+                    callback(nil, "Error: Couldn't decode data into LoginResponse")
+                    return
+                }
+                if let token = loginResponse.token {
+                    callback(token, nil)
+                }else {
+                    callback(nil, loginResponse.error!)
+                }
+            case .failure(let error):
+                callback(nil, error.localizedDescription)
             }
         }
     }
@@ -60,7 +73,7 @@ class Web {
         option.parameter = [ "email": email, "password": password]
         option.expectedStatusCodes = [400, 201]
         
-        Rest.fetchData(with: option) { (result) in
+        TestAPI.call(with: option) { (result) in
             
             switch(result) {
             case .success(let data):
@@ -106,7 +119,7 @@ class Web {
         
         option.expectedStatusCodes = [200, 404]
         
-        Rest.fetchData(with: option) { (result) in
+        TestAPI.call(with: option) { (result) in
             
             switch(result) {
             case .success(let data):
@@ -157,7 +170,7 @@ class Web {
         
         option.expectedStatusCodes = [200, 404]
         
-        Rest.fetchData(with: option) { (result) in
+        TestAPI.call(with: option) { (result) in
             
             switch(result) {
             case .success(let data):
@@ -201,7 +214,7 @@ class Web {
         
         option.expectedStatusCodes = [200, 404]
         
-        Rest.fetchData(with: option) { (result) in
+        TestAPI.call(with: option) { (result) in
             
             switch(result) {
             case .success(let data):
@@ -227,7 +240,7 @@ class Web {
         
         option.expectedStatusCodes = [204]
         
-        Rest.fetchData(with: option) { (result) in
+        TestAPI.call(with: option) { (result) in
             
             switch(result) {
             case .success(_):
@@ -251,7 +264,7 @@ class Web {
         
         option.expectedStatusCodes = [200, 404]
         
-        Rest.fetchData(with: option, andCancelToken: cancellationSource.token) { (result) in
+        TestAPI.call(with: option, andCancelToken: cancellationSource.token) { (result) in
             
             switch(result) {
             case .success(_):

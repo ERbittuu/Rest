@@ -21,7 +21,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // Override point for customization after application launch.
         
         print(AppDelegate.configuration.environment.info)
-        Web.defaultSettings()
+        TestAPI.defaultSettings()
         return true
     }
 
