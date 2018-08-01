@@ -232,19 +232,6 @@ public enum Result<Data> {
     /// Indicates a failed operation.
     /// - parameter ErrorType: The error from the operation.
     case failure(Error)
-    
-//    /// Gets the encapsulated value from the operation.
-//    ///
-//    /// - returns: The succesful `T` parameter this result is encapsulating.
-//    /// - throws: Throws the error if the operation was a failure.
-//    public func value() -> Data? {
-//        switch(self) {
-//        case .success(let value):
-//            return value
-//        case .failure(let error):
-//            return error.localizedDescription
-//        }
-//    }
 }
 
 private class RestManager: NSObject {
@@ -727,7 +714,7 @@ extension CancellationSource {
     }
 }
 
-/// RestRequired protocol for services wraper
+/// RestRequired protocol for services wrapper
 public protocol RestRequired {
     static var origin: String { get set }
     associatedtype End: RawRepresentable
@@ -736,6 +723,11 @@ public protocol RestRequired {
 // default implementation
 extension RestRequired {
     
+///     Call web service with given option 
+///     
+///     - parameter option:     `RestOptions` object as per your requirement 
+///     - parameter token:      `CancellationToken` if you want to cancel request after some time 
+///     - returns: a Rest `Result` of your service
     static func call(with option: RestOptions,
                      andCancelToken token: CancellationToken? = nil,
                      callback: @escaping (Result<Data>) -> ()) {
