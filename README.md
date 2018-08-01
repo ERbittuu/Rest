@@ -52,6 +52,11 @@ Two things you need to set...
 9. HTTPBodyRaw: (body: String, isJSON: Bool) -> An optional set of HTTP Raw body to send with the call, is JSON or not: will set "Content-Type" of HTTP request to "application/json" or "text/plain;charset=UTF-8"
 10. flow: Flow -> The request flow will be sync or aysnc, default to aysnc
 
+## How to Use?
+
+1. Drag `Rest.swift` file in your project 
+2. Create One service class with your requirement and follow the given Example pattern.
+3. Done.... 
 
 ## Example
 
