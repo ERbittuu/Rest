@@ -1,3 +1,10 @@
+# extra 
+Rest/
+RestTests/
+Package.swift
+Rest.xcodeproj
+
+
 # Xcode
 #
 # gitignore contributors: remember to update Global/Xcode.gitignore, Objective-C.gitignore & Swift.gitignore
