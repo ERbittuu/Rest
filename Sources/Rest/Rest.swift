@@ -10,20 +10,20 @@ import UIKit
 import SystemConfiguration
 
 /// Run block in background queue
-fileprivate func doInBackground(_ block: @escaping () -> Void) {
+private func doInBackground(_ block: @escaping () -> Void) {
     DispatchQueue.global(qos: .default).async {
         block()
     }
 }
 
 /// Run block in main queue
-fileprivate func doOnMain(_ block: @escaping () -> Void) {
+private func doOnMain(_ block: @escaping () -> Void) {
     DispatchQueue.main.async {
         block()
     }
 }
 
-fileprivate func < <T : Comparable>(lhs: T?, rhs: T?) -> Bool {
+private func < <T : Comparable>(lhs: T?, rhs: T?) -> Bool {
     switch (lhs, rhs) {
     case let (l?, r?):
         return l < r
@@ -34,7 +34,7 @@ fileprivate func < <T : Comparable>(lhs: T?, rhs: T?) -> Bool {
     }
 }
 
-fileprivate func > <T : Comparable>(lhs: T?, rhs: T?) -> Bool {
+private func > <T : Comparable>(lhs: T?, rhs: T?) -> Bool {
     switch (lhs, rhs) {
     case let (l?, r?):
         return l > r
@@ -360,7 +360,9 @@ private class RestManager: NSObject {
         }
     }
     
-    func processResponse(callback: @escaping (Result<Data>) -> Void, response: (data: Data?, response: URLResponse?, error: Error?), start time: Date) {
+    func processResponse(callback: @escaping (Result<Data>) -> Void,
+                         response: (data: Data?, response: URLResponse?, error: Error?),
+                         start time: Date) {
         
         if let error = response.error as NSError? {
             if error.code == -999 { // NSURLErrorCancelled
@@ -582,7 +584,7 @@ private class RestHelper {
             components += RestHelper.queryComponents(key, value ?? "value_is_nil")
         }
         
-        return components.map{"\($0)=\($1)"}.joined(separator: "&")
+        return components.map {"\($0)=\($1)"}.joined(separator: "&")
     }
     
     // add prepare URL Params
