@@ -10,14 +10,14 @@ import UIKit
 import SystemConfiguration
 
 /// Run block in background queue
-fileprivate func doInBackground(_ block: @escaping () -> ()) {
+fileprivate func doInBackground(_ block: @escaping () -> Void) {
     DispatchQueue.global(qos: .default).async {
         block()
     }
 }
 
 /// Run block in main queue
-fileprivate func doOnMain(_ block: @escaping () -> ()) {
+fileprivate func doOnMain(_ block: @escaping () -> Void) {
     DispatchQueue.main.async {
         block()
     }
@@ -105,7 +105,7 @@ open class Rest {
     
     fileprivate static func fetchData(with option: RestOptions,
                                  andCancelToken token: CancellationToken? = nil,
-                                 callback: @escaping (Result<Data>) -> ()) {
+                                 callback: @escaping (Result<Data>) -> Void) {
         // set full origin with route
         let url = option.origin!
         
@@ -245,7 +245,7 @@ private class RestManager: NSObject {
     
     var expectedStatusCode: [Int]?
     
-    var cancelToken: CancellationToken? = nil
+    var cancelToken: CancellationToken?
     
     var session: URLSession!
     var url: String!
@@ -331,7 +331,7 @@ private class RestManager: NSObject {
         }
     }
     
-    fileprivate func makeCall(callback: @escaping (Result<Data>) -> ()){
+    fileprivate func makeCall(callback: @escaping (Result<Data>) -> Void) {
        
         // Web service
         prepare()
@@ -355,12 +355,12 @@ private class RestManager: NSObject {
             self.session.finishTasksAndInvalidate()
         }
         self.task.resume()
-        if flow == .sync{
+        if flow == .sync {
             semaphore.wait()
         }
     }
     
-    func processResponse(callback: @escaping (Result<Data>) -> (), response: (data: Data?, response: URLResponse?, error: Error?), start time: Date) {
+    func processResponse(callback: @escaping (Result<Data>) -> Void, response: (data: Data?, response: URLResponse?, error: Error?), start time: Date) {
         
         if let error = response.error as NSError? {
             if error.code == -999 { // NSURLErrorCancelled
@@ -369,8 +369,7 @@ private class RestManager: NSObject {
                 Rest.log(str: "Rest Request: Error " + error.localizedDescription)
             }
             doOnMain { callback(.failure(error)) }
-        }
-        else {
+        } else {
             
             doInBackground {
                 
@@ -424,12 +423,14 @@ private class RestManager: NSObject {
             url = url + ((url.last == "/") ? slice : "/" + slice)
         }
         
-        if self.method == "GET" && self.params?.count > 0 {
+        if self.method == "GET" &&
+            self.params?.count > 0 {
             url = url + "?" + RestHelper.prepareParams(self.params!)
         }
         
         // rebuild request
-        if self.params?.count > 0 || self.urlParams?.count > 0  {
+        if self.params?.count > 0 ||
+            self.urlParams?.count > 0 {
             self.request = URLRequest(url: URL(string: url)!)
         }
         
@@ -462,7 +463,7 @@ private class RestManager: NSObject {
             data.append(self.HTTPBodyRaw.nsdata as Data)
         } else if self.files?.count > 0 {
             if self.method == "GET" {
-                print("\n\n------------------------\nThe remote server may not accept GET method with HTTP body. But Rest will send it anyway.\nBut it looks like iOS 9 SDK has prevented sending http body in GET method.\n------------------------\n\n")
+                print("\n\n------------------------\nThe remote server may not accept GET method with HTTP body.\n------------------------\n\n")
             } else {
                 if let ps = self.params {
                     for (key, value) in ps {
@@ -488,7 +489,8 @@ private class RestManager: NSObject {
                 }
                 data.append("--\(self.boundary)--\r\n".nsdata as Data)
             }
-        } else if self.params?.count > 0 && self.method != "GET" {
+        } else if self.params?.count > 0 &&
+            self.method != "GET" {
             data.append(RestHelper.prepareParams(self.params!).nsdata)
         }
         self.request.httpBody = data as Data
@@ -745,7 +747,7 @@ extension RestRequired {
 ///     - parameter callback    `Result` of your service
     static func call(with option: RestOptions,
                      andCancelToken token: CancellationToken? = nil,
-                     callback: @escaping (Result<Data>) -> ()) {
+                     callback: @escaping (Result<Data>) -> Void) {
         var _option = option
         
         guard origin.count > 0 else {
