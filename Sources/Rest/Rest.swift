@@ -310,23 +310,17 @@ private class RestManager: NSObject {
         
     }
     
-    func makeCall(callback: @escaping (Result<Data>) -> ()){
-        
+    fileprivate func prepare() {
         self.prepareRequest()
         self.prepareHeader()
         self.prepareBody()
-        
-        // Web service
-        doOnMain {
-            if Rest.default.activityIndicatorDisplay {
-                UIApplication.shared.isNetworkActivityIndicatorVisible = true
-            }
-        }
-
+    }
+    
+    fileprivate func printRequest() {
         if let a = self.request.allHTTPHeaderFields {
             Rest.log(str: "Rest Request HEADERS: " + a.description)
         }
-       
+        
         if let params = self.params, params.count > 0 {
             Rest.log(str: "Rest Request PARAMETER: \(params)")
         }
@@ -338,80 +332,91 @@ private class RestManager: NSObject {
         if self.HTTPBodyRaw.count > 0 {
             Rest.log(str: "Rest Request HTTPBodyRaw: " + self.HTTPBodyRaw)
         }
+    }
+    
+    fileprivate func makeCall(callback: @escaping (Result<Data>) -> ()){
+       
+        // Web service
+        prepare()
+        doOnMain {  if Rest.default.activityIndicatorDisplay { UIApplication.shared.isNetworkActivityIndicatorVisible = true } }
+        printRequest()
         
         let semaphore = DispatchSemaphore(value: 0)
         
         let started = Date() // start time
         self.task = self.session.dataTask(with: self.request) { (data, response, error) -> Void in
             
+            // reset cancel clousers
             self.cancelToken?.resetAllHandlers()
             
-            doOnMain {
-                if Rest.default.activityIndicatorDisplay {
-                    UIApplication.shared.isNetworkActivityIndicatorVisible = false
-                }
-            }
+            doOnMain {  if Rest.default.activityIndicatorDisplay { UIApplication.shared.isNetworkActivityIndicatorVisible = false } }
             
             semaphore.signal()
             
-            if let error = error as NSError? {
-                if error.code == -999 { // NSURLErrorCancelled
-                    Rest.log(str: "Rest Request Cancel Manually: " + self.url)
-                } else {
-                    Rest.log(str: "Rest Request: Error " + error.localizedDescription)
-                }
-                doOnMain { callback(.failure(error)) }
-            }
-            else {
-                
-                doInBackground {
-
-                    guard let httpResponse = response as? HTTPURLResponse else {
-                        Rest.log(str: "Rest Response: Failed with badResponse")
-                        doOnMain { callback(.failure(RestError.badResponse(data))) }
-                        return
-                    }
-                    
-                    if let expectedStatusCode = self.expectedStatusCode,
-                        expectedStatusCode.count > 0,
-                        !expectedStatusCode.contains(httpResponse.statusCode) {
-                        Rest.log(str: "Rest Response: Failed with bad statusCode \(httpResponse.statusCode)")
-                        doOnMain { callback(.failure(RestError.unexpectedStatusCode(httpResponse.statusCode, data))) }
-                        return
-                    }
-                    
-                    Rest.log(str: "Rest Response: Success with statusCode (\(httpResponse.statusCode)), Request Time: [\(Date().timeIntervalSince(started))]")
-                    
-                    guard let returnedData = data else {
-                        Rest.log(str: "Rest Response: nil data received")
-                        doOnMain { callback(.success(Data())) }
-                        return
-                    }
-                    
-                    func getprettyPrinted(data: Data) -> String? {
-                        do {
-                            let dic = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any]
-                            let data: Data = try JSONSerialization.data(withJSONObject: dic ?? [:], options: .prettyPrinted)
-                            return String(data: data, encoding: .utf8)
-                        } catch {
-                            return nil
-                        }
-                    }
-                    
-                    if let string = getprettyPrinted(data: returnedData) {
-                        Rest.log(str: "Rest Response: \(string)")
-                    } else {
-                        Rest.log(str: "Rest Response: Unable to decode in redable string")
-                    }
-                    
-                    doOnMain { callback(.success(returnedData)) }
-                }
-            }
+            self.processResponse(callback: callback, response: (data, response, error), start: started)
+            
             self.session.finishTasksAndInvalidate()
         }
         self.task.resume()
         if flow == .sync{
             semaphore.wait()
+        }
+    }
+    
+    func processResponse(callback: @escaping (Result<Data>) -> (), response: (data: Data?, response: URLResponse?, error: Error?), start time: Date) {
+        
+        if let error = response.error as NSError? {
+            if error.code == -999 { // NSURLErrorCancelled
+                Rest.log(str: "Rest Request Cancel Manually: " + self.url)
+            } else {
+                Rest.log(str: "Rest Request: Error " + error.localizedDescription)
+            }
+            doOnMain { callback(.failure(error)) }
+        }
+        else {
+            
+            doInBackground {
+                
+                guard let httpResponse = response.response as? HTTPURLResponse else {
+                    Rest.log(str: "Rest Response: Failed with badResponse")
+                    doOnMain { callback(.failure(RestError.badResponse(response.data))) }
+                    return
+                }
+                
+                if let expectedStatusCode = self.expectedStatusCode,
+                    expectedStatusCode.count > 0,
+                    !expectedStatusCode.contains(httpResponse.statusCode) {
+                    Rest.log(str: "Rest Response: Failed with bad statusCode \(httpResponse.statusCode)")
+                    doOnMain { callback(.failure(RestError.unexpectedStatusCode(httpResponse.statusCode, response.data))) }
+                    return
+                }
+                
+                Rest.log(str: "Rest Response: Success with statusCode (\(httpResponse.statusCode)), Request Time: [\(Date().timeIntervalSince(time))]")
+                
+                guard let returnedData = response.data else {
+                    Rest.log(str: "Rest Response: nil data received")
+                    doOnMain { callback(.success(Data())) }
+                    return
+                }
+                
+                if let string = returnedData.prettyPrinted {
+                    Rest.log(str: "Rest Response: \(string)")
+                } else {
+                    Rest.log(str: "Rest Response: Unable to decode in redable string")
+                }
+                
+                doOnMain { callback(.success(returnedData)) }
+            }
+        }
+    }
+    
+    private func getprettyPrinted(data: Data) -> String? {
+        do {
+            let dic = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any]
+            let data: Data = try JSONSerialization.data(withJSONObject: dic ?? [:], options: .prettyPrinted)
+            return String(data: data, encoding: .utf8)
+        } catch {
+            return nil
         }
     }
     
@@ -552,6 +557,19 @@ private extension String {
         let utf8EncodeData: Data! = self.data(using: String.Encoding.utf8, allowLossyConversion: true)
         let base64EncodingData = utf8EncodeData.base64EncodedString(options: [])
         return base64EncodingData
+    }
+}
+
+fileprivate extension Data {
+
+    var prettyPrinted: String? {
+        do {
+            let dic = try JSONSerialization.jsonObject(with: self, options: []) as? [String: Any]
+            let data: Data = try JSONSerialization.data(withJSONObject: dic ?? [:], options: .prettyPrinted)
+            return String(data: data, encoding: .utf8)
+        } catch {
+            return nil
+        }
     }
 }
 
