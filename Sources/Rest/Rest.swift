@@ -44,7 +44,7 @@ fileprivate func > <T : Comparable>(lhs: T?, rhs: T?) -> Bool {
 }
 
 /// Run block in main queue
-fileprivate class Network {
+private class Network {
      static func isAvailable() -> Bool {
         var zeroAddress = sockaddr_in()
         zeroAddress.sin_len = UInt8(MemoryLayout<sockaddr_in>.size)
@@ -72,23 +72,18 @@ fileprivate class Network {
 
 open class Rest {
     
-    public struct `default` {
+    public struct Settings {
         /// if set to true, Rest will log all information in a NSURLSession lifecycle
         public static var showLogs = true
         
         /// default timeout for all services
         public static var timeout = 60.0
         
-        /// index webservice help in debug
-        static var index : Int {
-            return Rest.indexRequest
-        }
-        
         /// Network Activity Indicator display default is true iOS Only
         public static var activityIndicatorDisplay : Bool = true
         
         /// The expected status call for the call, Default is from any.
-        public static var statusCodes: [Int]?
+        public static var expectedStatusCodes: [Int]?
         
         /// The NSURLRequest CachePolicy for Rest request
         public static var cachePolicy = NSURLRequest.CachePolicy.reloadIgnoringLocalCacheData
@@ -103,8 +98,8 @@ open class Rest {
     }
     
     fileprivate static func log(str : String) {
-        if Rest.default.showLogs {
-            print("<\(Rest.default.index)> " + str)
+        if Rest.Settings.showLogs {
+            print("<\(Rest.indexRequest)> " + str)
         }
     }
     
@@ -178,7 +173,9 @@ public enum RestError: Error, LocalizedError{
     }
 }
 
-/// Options for `Rest` calls. Allows you to set an expected HTTP status code, HTTP Headers, or to modify the request timeout.
+/// Options for `Rest` calls.
+/// Allows you to set an expected HTTP status code,
+/// HTTP Headers, or to modify the request timeout.
 public struct RestOptions {
     
     fileprivate var origin: String!
@@ -190,10 +187,10 @@ public struct RestOptions {
     public var requestType: HTTPMethod
     
     /// The expected status call for the call, Default is from Rest default setting.
-    public var expectedStatusCodes: [Int]? = Rest.default.statusCodes
+    public var expectedStatusCodes: [Int]? = Rest.Settings.expectedStatusCodes
     
     /// The amount of time in `seconds` until the request times out, Default is from Rest default setting.
-    public var requestTimeoutSeconds = Rest.default.timeout
+    public var requestTimeoutSeconds = Rest.Settings.timeout
     
     /// An optional set of params to to send
     /// What params you want to add in the request. Rest will do things right whether methed is GET or POST.
@@ -310,13 +307,13 @@ private class RestManager: NSObject {
         
     }
     
-    fileprivate func prepare() {
+    private func prepare() {
         self.prepareRequest()
         self.prepareHeader()
         self.prepareBody()
     }
     
-    fileprivate func printRequest() {
+    private func printRequest() {
         if let a = self.request.allHTTPHeaderFields {
             Rest.log(str: "Rest Request HEADERS: " + a.description)
         }
@@ -338,7 +335,7 @@ private class RestManager: NSObject {
        
         // Web service
         prepare()
-        doOnMain {  if Rest.default.activityIndicatorDisplay { UIApplication.shared.isNetworkActivityIndicatorVisible = true } }
+        doOnMain {  if Rest.Settings.activityIndicatorDisplay { UIApplication.shared.isNetworkActivityIndicatorVisible = true } }
         printRequest()
         
         let semaphore = DispatchSemaphore(value: 0)
@@ -349,7 +346,7 @@ private class RestManager: NSObject {
             // reset cancel clousers
             self.cancelToken?.resetAllHandlers()
             
-            doOnMain {  if Rest.default.activityIndicatorDisplay { UIApplication.shared.isNetworkActivityIndicatorVisible = false } }
+            doOnMain {  if Rest.Settings.activityIndicatorDisplay { UIApplication.shared.isNetworkActivityIndicatorVisible = false } }
             
             semaphore.signal()
             
@@ -436,7 +433,7 @@ private class RestManager: NSObject {
             self.request = URLRequest(url: URL(string: url)!)
         }
         
-        self.request.cachePolicy = Rest.default.cachePolicy
+        self.request.cachePolicy = Rest.Settings.cachePolicy
         self.request.httpMethod = self.method
         Rest.log(str: "Rest Request: \(self.flow)[\(self.method!)] -> \(url!)")
     }
